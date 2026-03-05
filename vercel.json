@@ -29,6 +29,5 @@
       "path": "/cron/market-making",
       "schedule": "0 0 * * *"
     }
-  ],
-]
+  ]
 }
