@@ -710,6 +710,47 @@
         border-bottom: 1px solid var(--border);
       }
     }
+
+    /* ── Automation panel ────────────────────────────────────────────────── */
+    .automation-panel {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      transition: border-color .3s;
+    }
+
+    .automation-panel.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 14px rgba(0, 255, 136, 0.15);
+    }
+
+    .automation-label {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .automation-title {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.05em;
+    }
+
+    .automation-status {
+      font-size: 0.64rem;
+      color: var(--muted);
+    }
+
+    .automation-status.on {
+      color: var(--accent);
+    }
   </style>
 </head>
 
@@ -735,6 +776,22 @@
 
     <!-- Sidebar -->
     <aside class="sidebar">
+
+
+      <!-- ── Automation Master Toggle ───────────────────────────────── -->
+      <div>
+        <div class="panel-label">Automation</div>
+        <div class="automation-panel" id="automation-panel">
+          <div class="automation-label">
+            <div class="automation-title">⚡ Trading Bot</div>
+            <div class="automation-status" id="automation-status">STOPPED</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="toggle-automation" onchange="toggleAutomation()">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
 
       <!-- Venue -->
       <div>

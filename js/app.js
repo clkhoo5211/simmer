@@ -2,14 +2,14 @@
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let state = {
-  portfolio:  null,
-  markets:    [],
-  positions:  [],
-  arbOpps:    [],
-  config:     {},
-  venue:      "simmer",
-  tradeLog:   [],
-  pollTimer:  null,
+  portfolio: null,
+  markets: [],
+  positions: [],
+  arbOpps: [],
+  config: {},
+  venue: "simmer",
+  tradeLog: [],
+  pollTimer: null,
 };
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
@@ -31,10 +31,10 @@ async function loadAll() {
     ]);
 
     state.portfolio = portfolio;
-    state.markets   = markets;
+    state.markets = markets;
     state.positions = positions;
-    state.config    = config;
-    state.venue     = config.default_venue || "simmer";
+    state.config = config;
+    state.venue = config.default_venue || "simmer";
 
     renderAll();
     setStatus(health.stop_loss ? "halted" : "live");
@@ -67,9 +67,9 @@ function renderHeader() {
 function renderPortfolio() {
   const p = state.portfolio;
   if (!p) return;
-  setText("balance",    fmt$(p.balance_usdc));
-  setText("total-pnl",  fmt$(p.total_pnl));
-  setText("exposure",   fmt$(p.total_exposure));
+  setText("balance", fmt$(p.balance_usdc));
+  setText("total-pnl", fmt$(p.total_pnl));
+  setText("exposure", fmt$(p.total_exposure));
   setText("daily-used", fmt$(p.daily_spent) + " / " + fmt$(p.daily_limit));
 
   const pnlEl = document.getElementById("total-pnl");
@@ -84,15 +84,15 @@ function renderMarkets() {
   if (!tbody) return;
   tbody.innerHTML = state.markets.map(m => `
     <tr class="market-row" data-id="${m.id}">
-      <td class="q-cell" title="${m.question}">${m.question.slice(0,58)}${m.question.length>58?"…":""}</td>
+      <td class="q-cell" title="${m.question}">${m.question.slice(0, 58)}${m.question.length > 58 ? "…" : ""}</td>
       <td>
         <div class="prob-bar-wrap">
-          <div class="prob-bar" style="width:${(m.current_probability*100).toFixed(1)}%"></div>
-          <span class="prob-label">${(m.current_probability*100).toFixed(1)}%</span>
+          <div class="prob-bar" style="width:${(m.current_probability * 100).toFixed(1)}%"></div>
+          <span class="prob-label">${(m.current_probability * 100).toFixed(1)}%</span>
         </div>
       </td>
-      <td class="${m.divergence > 0 ? 'pos' : m.divergence < 0 ? 'neg' : ''}">${m.divergence != null ? (m.divergence*100).toFixed(2)+"%" : "—"}</td>
-      <td>${m.resolves_at ? m.resolves_at.slice(0,10) : "—"}</td>
+      <td class="${m.divergence > 0 ? 'pos' : m.divergence < 0 ? 'neg' : ''}">${m.divergence != null ? (m.divergence * 100).toFixed(2) + "%" : "—"}</td>
+      <td>${m.resolves_at ? m.resolves_at.slice(0, 10) : "—"}</td>
       <td>
         <div class="trade-btns">
           <button class="btn-yes" onclick="quickTrade('${m.id}','yes')">YES</button>
@@ -112,7 +112,7 @@ function renderPositions() {
   }
   tbody.innerHTML = state.positions.map(p => `
     <tr>
-      <td title="${p.question}">${p.question.slice(0,50)}${p.question.length>50?"…":""}</td>
+      <td title="${p.question}">${p.question.slice(0, 50)}${p.question.length > 50 ? "…" : ""}</td>
       <td>${p.shares_yes.toFixed(3)}</td>
       <td>${p.shares_no.toFixed(3)}</td>
       <td>${fmt$(p.current_value)}</td>
@@ -126,21 +126,29 @@ function renderConfig() {
   const c = state.config;
   if (!c) return;
 
-  setChecked("toggle-arb",  c.strategy_arb);
-  setChecked("toggle-mm",   c.strategy_mm);
-  setChecked("toggle-ai",   c.strategy_ai);
+  // Master automation toggle
+  const isOn = !!c.automation_enabled;
+  setChecked("toggle-automation", isOn);
+  const panel = document.getElementById("automation-panel");
+  const status = document.getElementById("automation-status");
+  if (panel) panel.classList.toggle("active", isOn);
+  if (status) { status.textContent = isOn ? "RUNNING" : "STOPPED"; status.className = `automation-status${isOn ? " on" : ""}`; }
+
+  setChecked("toggle-arb", c.strategy_arb);
+  setChecked("toggle-mm", c.strategy_mm);
+  setChecked("toggle-ai", c.strategy_ai);
   setChecked("toggle-corr", c.strategy_correlation);
 
-  setVal("cfg-venue",     c.default_venue   || "simmer");
-  setVal("cfg-max-trade", c.max_trade_usd   || 25);
-  setVal("cfg-max-daily", c.max_daily_usd   || 200);
-  setVal("cfg-min-edge",  (c.min_arb_edge * 100).toFixed(1) || 1.5);
+  setVal("cfg-venue", c.default_venue || "simmer");
+  setVal("cfg-max-trade", c.max_trade_usd || 25);
+  setVal("cfg-max-daily", c.max_daily_usd || 200);
+  setVal("cfg-min-edge", (c.min_arb_edge * 100).toFixed(1) || 1.5);
 }
 
 // ── Actions ───────────────────────────────────────────────────────────────────
 async function quickTrade(marketId, side) {
-  const amount = parseFloat(document.getElementById("quick-amount")?.value) 
-              || CONFIG.DEFAULT_TRADE_AMOUNT;
+  const amount = parseFloat(document.getElementById("quick-amount")?.value)
+    || CONFIG.DEFAULT_TRADE_AMOUNT;
   const reason = document.getElementById("quick-reason")?.value || "";
 
   showToast(`Placing ${side.toUpperCase()} $${amount}…`, "info");
@@ -183,10 +191,10 @@ function renderArbResults(opps) {
   }
   el.innerHTML = opps.map(o => `
     <div class="arb-card">
-      <p class="arb-q">${o.question.slice(0,60)}</p>
+      <p class="arb-q">${o.question.slice(0, 60)}</p>
       <div class="arb-meta">
-        <span>YES ${(o.yes_price*100).toFixed(1)}¢</span>
-        <span>NO ${(o.no_price*100).toFixed(1)}¢</span>
+        <span>YES ${(o.yes_price * 100).toFixed(1)}¢</span>
+        <span>NO ${(o.no_price * 100).toFixed(1)}¢</span>
         <span class="arb-edge">Edge: <b>${o.edge_pct}%</b></span>
       </div>
     </div>
@@ -194,26 +202,28 @@ function renderArbResults(opps) {
 }
 
 async function saveConfig() {
-  const venue    = getVal("cfg-venue");
+  const venue = getVal("cfg-venue");
   const maxTrade = parseFloat(getVal("cfg-max-trade"));
   const maxDaily = parseFloat(getVal("cfg-max-daily"));
-  const minEdge  = parseFloat(getVal("cfg-min-edge")) / 100;
+  const minEdge = parseFloat(getVal("cfg-min-edge")) / 100;
 
   const body = {
-    default_venue:        venue,
-    max_trade_usd:        maxTrade,
-    max_daily_usd:        maxDaily,
-    min_arb_edge:         minEdge,
-    strategy_arb:         getChecked("toggle-arb"),
-    strategy_mm:          getChecked("toggle-mm"),
-    strategy_ai:          getChecked("toggle-ai"),
+    default_venue: venue,
+    max_trade_usd: maxTrade,
+    max_daily_usd: maxDaily,
+    min_arb_edge: minEdge,
+    automation_enabled: getChecked("toggle-automation"),
+    strategy_arb: getChecked("toggle-arb"),
+    strategy_mm: getChecked("toggle-mm"),
+    strategy_ai: getChecked("toggle-ai"),
     strategy_correlation: getChecked("toggle-corr"),
   };
 
   try {
     const updated = await api.updateConfig(body);
-    state.config  = updated;
-    state.venue   = updated.default_venue;
+    state.config = updated;
+    state.venue = updated.default_venue;
+    renderConfig();
     showToast("⚙️ Config saved", "success");
     await loadAll();
   } catch (err) {
@@ -221,15 +231,30 @@ async function saveConfig() {
   }
 }
 
+// Toggle master automation on/off immediately
+async function toggleAutomation() {
+  const enabled = getChecked("toggle-automation");
+  try {
+    const updated = await api.updateConfig({ automation_enabled: enabled });
+    state.config = updated;
+    renderConfig();
+    showToast(enabled ? "⚡ Automation STARTED" : "⏹ Automation STOPPED", enabled ? "success" : "info");
+  } catch (err) {
+    showToast("Failed to update automation state", "error");
+    // Revert toggle on failure
+    setChecked("toggle-automation", !enabled);
+  }
+}
+
 // ── Log ───────────────────────────────────────────────────────────────────────
 function logTrade(marketId, side, amount, result) {
   state.tradeLog.unshift({
-    time:   new Date().toLocaleTimeString(),
+    time: new Date().toLocaleTimeString(),
     market: marketId.slice(0, 10) + "…",
     side,
     amount,
     shares: result.shares_bought,
-    cost:   result.cost,
+    cost: result.cost,
   });
   state.tradeLog = state.tradeLog.slice(0, 30);   // Keep last 30
 
@@ -241,7 +266,7 @@ function logTrade(marketId, side, amount, result) {
       <td class="mono">${t.market}</td>
       <td class="${t.side === 'yes' ? 'pos' : 'neg'}">${t.side.toUpperCase()}</td>
       <td>${fmt$(t.amount)}</td>
-      <td class="mono">${(t.shares||0).toFixed(3)}</td>
+      <td class="mono">${(t.shares || 0).toFixed(3)}</td>
     </tr>
   `).join("");
 }
@@ -260,26 +285,26 @@ function bindEvents() {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function setText(id, val)        { const e = document.getElementById(id); if (e) e.textContent = val; }
-function setVal(id, val)         { const e = document.getElementById(id); if (e) e.value = val; }
-function setChecked(id, val)     { const e = document.getElementById(id); if (e) e.checked = !!val; }
-function getVal(id)              { return document.getElementById(id)?.value; }
-function getChecked(id)          { return document.getElementById(id)?.checked; }
-function fmt$(v)                 { return "$" + (parseFloat(v)||0).toFixed(2); }
+function setText(id, val) { const e = document.getElementById(id); if (e) e.textContent = val; }
+function setVal(id, val) { const e = document.getElementById(id); if (e) e.value = val; }
+function setChecked(id, val) { const e = document.getElementById(id); if (e) e.checked = !!val; }
+function getVal(id) { return document.getElementById(id)?.value; }
+function getChecked(id) { return document.getElementById(id)?.checked; }
+function fmt$(v) { return "$" + (parseFloat(v) || 0).toFixed(2); }
 
 function setStatus(s) {
   const dot = document.getElementById("status-dot");
   const lbl = document.getElementById("status-label");
   if (!dot || !lbl) return;
   const map = {
-    live:    ["#00ff88", "LIVE"],
+    live: ["#00ff88", "LIVE"],
     loading: ["#f5a623", "SYNCING"],
-    error:   ["#ff4d4d", "OFFLINE"],
-    halted:  ["#ff4d4d", "HALTED"],
+    error: ["#ff4d4d", "OFFLINE"],
+    halted: ["#ff4d4d", "HALTED"],
   };
   const [color, text] = map[s] || ["#888", s];
   dot.style.background = color;
-  lbl.textContent      = text;
+  lbl.textContent = text;
 }
 
 function showToast(msg, type = "info") {
