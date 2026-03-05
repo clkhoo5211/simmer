@@ -10,7 +10,13 @@ _clients: dict[str, SimmerClient] = {}
 def get_client(venue: str | None = None) -> SimmerClient:
     venue = venue or os.environ.get("DEFAULT_VENUE", "simmer")
     if venue not in _clients:
-        kwargs = dict(api_key=os.environ["SIMMER_API_KEY"], venue=venue)
+        api_key = os.environ.get("SIMMER_API_KEY")
+        if not api_key:
+            raise RuntimeError(
+                "SIMMER_API_KEY environment variable is not set. "
+                "Please add it in your Vercel project settings under Settings > Environment Variables."
+            )
+        kwargs = dict(api_key=api_key, venue=venue)
         # Attach EVM private key for polymarket
         if venue == "polymarket" and os.environ.get("SIMMER_PRIVATE_KEY"):
             kwargs["private_key"] = os.environ["SIMMER_PRIVATE_KEY"]

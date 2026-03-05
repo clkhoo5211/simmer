@@ -186,32 +186,45 @@ def get_price_history(market_id: str, venue: str = ""):
 # ── Manual Trade ──────────────────────────────────────────────────────────────
 @app.post("/api/trade")
 def manual_trade(req: TradeRequest):
-    v      = req.venue or _config["default_venue"]
-    client = get_client(v)
+    try:
+        v      = req.venue or _config["default_venue"]
+        client = get_client(v)
 
-    ok, reason = check_limits(req.amount)
-    if not ok:
-        raise HTTPException(status_code=400, detail=reason)
+        ok, reason = check_limits(req.amount)
+        if not ok:
+            raise HTTPException(status_code=400, detail=reason)
 
-    result = client.trade(
-        market_id=req.market_id,
-        side=req.side,
-        amount=req.amount,
-        reasoning=req.reasoning or None,
-        source="sdk:manual",
-    )
-    if not result or not result.success:
-        raise HTTPException(status_code=400, detail=getattr(result, "error", "Trade failed"))
+        result = client.trade(
+            market_id=req.market_id,
+            side=req.side,
+            amount=req.amount,
+            reasoning=req.reasoning or None,
+            source="sdk:manual",
+        )
+        if not result or not result.success:
+            raise HTTPException(
+                status_code=400,
+                detail=getattr(result, "error", "Trade failed") or "Trade returned no result"
+            )
 
-    return {
-        "trade_id":      result.trade_id,
-        "market_id":     result.market_id,
-        "side":          result.side,
-        "shares_bought": round(result.shares_bought, 4),
-        "cost":          round(result.cost, 4),
-        "new_price":     round(result.new_price, 4) if result.new_price else None,
-        "order_status":  result.order_status,
-    }
+        return {
+            "trade_id":      result.trade_id,
+            "market_id":     result.market_id,
+            "side":          result.side,
+            "shares_bought": round(result.shares_bought, 4),
+            "cost":          round(result.cost, 4),
+            "new_price":     round(result.new_price, 4) if result.new_price else None,
+            "order_status":  result.order_status,
+        }
+    except HTTPException:
+        raise   # re-raise our own structured errors unchanged
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    except Exception as exc:
+        logger.exception("manual_trade error")
+        raise HTTPException(status_code=500, detail=f"Trade error: {exc}")
+
+
 
 
 # ── Config ────────────────────────────────────────────────────────────────────
