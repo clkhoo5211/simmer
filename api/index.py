@@ -14,7 +14,7 @@ from loguru import logger
 
 from core.client import get_client
 from core.risk import daily_spent, MAX_TRADE, MAX_DAILY, check_limits, stop_loss_triggered
-from core.store import load_config, save_config
+from core.store import load_config, save_config, load_credentials, save_credentials
 from strategies.arb_yesno   import run_arb_cycle, run_cross_platform_arb
 from strategies.market_maker import run_market_making
 from strategies.ai_prob      import run_ai_prob_cycle
@@ -69,11 +69,21 @@ class ConfigUpdate(BaseModel):
     max_daily_usd:        float | None = None
     min_arb_edge:         float | None = None
     default_venue:        str   | None = None
-    automation_enabled:   bool  | None = None   # Master automation switch
+    automation_enabled:   bool  | None = None
     strategy_arb:         bool  | None = None
     strategy_mm:          bool  | None = None
     strategy_ai:          bool  | None = None
     strategy_correlation: bool  | None = None
+
+
+class CredentialsUpdate(BaseModel):
+    simmer_api_key:          str | None = None  # Simmer SDK key (sk_live_...)
+    wallet_private_key:      str | None = None  # Polymarket EVM key (0x...)
+    polymarket_api_key:      str | None = None  # Polymarket CLOB API key
+    polymarket_api_secret:   str | None = None  # Polymarket CLOB secret
+    polymarket_passphrase:   str | None = None  # Polymarket CLOB passphrase
+    polymarket_wallet_addr:  str | None = None  # Polymarket wallet address
+    solana_private_key:      str | None = None  # Kalshi via Solana (base58)
 
 
 # Runtime config — loaded from Redis on cold start, falls back to defaults
@@ -244,6 +254,56 @@ def update_config(body: ConfigUpdate):
     save_config(_config)   # ← persist to Upstash Redis so toggles survive cold starts
     logger.info(f"⚙️  Config updated: {body.model_dump(exclude_none=True)}")
     return _config
+
+
+# ── Credentials ───────────────────────────────────────────────────────────────
+def _mask(val: str | None) -> str | None:
+    """Mask sensitive string — show only last 4 chars."""
+    if not val or len(val) < 4:
+        return "****" if val else None
+    return "****" + val[-4:]
+
+
+@app.get("/api/credentials")
+def get_credentials():
+    """Return saved credentials with sensitive values masked."""
+    creds = load_credentials()
+    # Overlay env vars as defaults if Redis value not set
+    merged = {
+        "simmer_api_key":         creds.get("simmer_api_key")         or os.environ.get("SIMMER_API_KEY"),
+        "wallet_private_key":     creds.get("wallet_private_key")     or os.environ.get("WALLET_PRIVATE_KEY") or os.environ.get("SIMMER_PRIVATE_KEY"),
+        "polymarket_api_key":     creds.get("polymarket_api_key"),
+        "polymarket_api_secret":  creds.get("polymarket_api_secret"),
+        "polymarket_passphrase":  creds.get("polymarket_passphrase"),
+        "polymarket_wallet_addr": creds.get("polymarket_wallet_addr"),
+        "solana_private_key":     creds.get("solana_private_key")     or os.environ.get("SOLANA_PRIVATE_KEY"),
+    }
+    # Mask all sensitive fields except wallet address
+    return {
+        "simmer_api_key":         _mask(merged["simmer_api_key"]),
+        "wallet_private_key":     _mask(merged["wallet_private_key"]),
+        "polymarket_api_key":     _mask(merged["polymarket_api_key"]),
+        "polymarket_api_secret":  _mask(merged["polymarket_api_secret"]),
+        "polymarket_passphrase":  _mask(merged["polymarket_passphrase"]),
+        "polymarket_wallet_addr": merged["polymarket_wallet_addr"],   # wallet addr is not secret
+        "solana_private_key":     _mask(merged["solana_private_key"]),
+        "configured": {
+            "simmer":     bool(merged["simmer_api_key"]),
+            "polymarket": bool(merged["wallet_private_key"]),
+            "kalshi":     bool(merged["solana_private_key"]),
+        }
+    }
+
+
+@app.post("/api/credentials")
+def update_credentials(body: CredentialsUpdate):
+    """Save API credentials to Redis. Only provided fields are updated."""
+    existing = load_credentials()
+    updates  = body.model_dump(exclude_none=True)
+    existing.update(updates)
+    save_credentials(existing)
+    logger.info(f"🔑 Credentials updated: {list(updates.keys())}")
+    return {"ok": True, "updated": list(updates.keys())}
 
 
 # ── Arb Scan (read-only) ──────────────────────────────────────────────────────

@@ -76,3 +76,26 @@ def save_config(config: dict) -> bool:
         return True
     logger.warning("Config NOT saved to Redis (Redis may not be configured).")
     return False
+
+CREDENTIALS_KEY = "simmer:credentials"
+
+
+def load_credentials() -> dict:
+    """Load saved API credentials from Redis. Returns empty dict if not set."""
+    raw = _redis_request("get", CREDENTIALS_KEY)
+    if raw:
+        try:
+            return json.loads(raw)
+        except Exception as exc:
+            logger.warning(f"Failed to parse Redis credentials: {exc}")
+    return {}
+
+
+def save_credentials(creds: dict) -> bool:
+    """Save API credentials to Redis. Returns True on success."""
+    result = _redis_request("set", CREDENTIALS_KEY, json.dumps(creds))
+    if result == "OK":
+        logger.info("Credentials saved to Redis.")
+        return True
+    logger.warning("Credentials NOT saved to Redis.")
+    return False
