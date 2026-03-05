@@ -1,37 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Security Headers: GitHub Pages doesn't allow custom HTTP headers, so we enforce CSP via meta tag -->
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://simmer-backend.vercel.app; img-src 'self' data:;" />
+
   <title>Simmer Bot — Control Terminal</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap"
+    rel="stylesheet" />
   <style>
     /* ── Reset & Variables ─────────────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg:       #080c10;
-      --bg2:      #0d1117;
-      --bg3:      #131b24;
-      --border:   #1e2d3d;
-      --border2:  #243447;
-      --text:     #c8d6e5;
-      --muted:    #4a6080;
-      --accent:   #00ff88;
-      --accent2:  #0ea5e9;
-      --warn:     #f59e0b;
-      --danger:   #f43f5e;
-      --yes:      #00ff88;
-      --no:       #f43f5e;
-      --mono:     'Space Mono', monospace;
-      --sans:     'DM Sans', sans-serif;
-      --radius:   6px;
-      --glow:     0 0 16px rgba(0,255,136,0.15);
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
-    html { font-size: 14px; }
+    :root {
+      --bg: #080c10;
+      --bg2: #0d1117;
+      --bg3: #131b24;
+      --border: #1e2d3d;
+      --border2: #243447;
+      --text: #c8d6e5;
+      --muted: #4a6080;
+      --accent: #00ff88;
+      --accent2: #0ea5e9;
+      --warn: #f59e0b;
+      --danger: #f43f5e;
+      --yes: #00ff88;
+      --no: #f43f5e;
+      --mono: 'Space Mono', monospace;
+      --sans: 'DM Sans', sans-serif;
+      --radius: 6px;
+      --glow: 0 0 16px rgba(0, 255, 136, 0.15);
+    }
+
+    html {
+      font-size: 14px;
+    }
+
     body {
       background: var(--bg);
       color: var(--text);
@@ -41,21 +58,30 @@
     }
 
     /* ── Scrollbar ──────────────────────────────────────────────────────── */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: var(--bg2); }
-    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg2);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border2);
+      border-radius: 3px;
+    }
 
     /* ── Scan-line overlay ─────────────────────────────────────────────── */
     body::before {
       content: "";
-      position: fixed; inset: 0;
-      background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0,0,0,0.08) 2px,
-        rgba(0,0,0,0.08) 4px
-      );
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(0deg,
+          transparent,
+          transparent 2px,
+          rgba(0, 0, 0, 0.08) 2px,
+          rgba(0, 0, 0, 0.08) 4px);
       pointer-events: none;
       z-index: 9999;
     }
@@ -68,20 +94,31 @@
       padding: 14px 28px;
       border-bottom: 1px solid var(--border);
       background: var(--bg2);
-      position: sticky; top: 0; z-index: 100;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
+
     .header-left {
-      display: flex; align-items: center; gap: 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
     }
+
     .logo {
       font-family: var(--mono);
       font-size: 1.15rem;
       font-weight: 700;
       color: var(--accent);
       letter-spacing: 0.08em;
-      text-shadow: 0 0 12px rgba(0,255,136,0.4);
+      text-shadow: 0 0 12px rgba(0, 255, 136, 0.4);
     }
-    .logo span { color: var(--muted); font-weight: 400; }
+
+    .logo span {
+      color: var(--muted);
+      font-weight: 400;
+    }
+
     .venue-badge {
       font-family: var(--mono);
       font-size: 0.65rem;
@@ -91,30 +128,58 @@
       border-radius: 100px;
       letter-spacing: 0.12em;
     }
+
     .header-right {
-      display: flex; align-items: center; gap: 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
     }
+
     .status-pill {
-      display: flex; align-items: center; gap: 6px;
-      font-family: var(--mono); font-size: 0.7rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--mono);
+      font-size: 0.7rem;
       color: var(--muted);
     }
+
     .status-dot {
-      width: 8px; height: 8px; border-radius: 50%;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
       background: var(--accent);
       animation: pulse 2s ease-in-out infinite;
     }
+
     @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0.4; }
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.4;
+      }
     }
+
     .btn-icon {
-      background: var(--bg3); border: 1px solid var(--border);
-      color: var(--text); padding: 6px 12px; border-radius: var(--radius);
-      cursor: pointer; font-family: var(--mono); font-size: 0.72rem;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 0.72rem;
       transition: border-color .15s, color .15s;
     }
-    .btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+
+    .btn-icon:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
 
     /* ── Layout ─────────────────────────────────────────────────────────── */
     .main {
@@ -124,15 +189,21 @@
       gap: 0;
       min-height: calc(100vh - 53px);
     }
+
     .sidebar {
       background: var(--bg2);
       border-right: 1px solid var(--border);
       padding: 20px 16px;
-      display: flex; flex-direction: column; gap: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
     }
+
     .content {
       padding: 24px 28px;
-      display: flex; flex-direction: column; gap: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
       overflow-y: auto;
     }
 
@@ -159,445 +230,732 @@
       cursor: pointer;
       outline: none;
     }
-    select:focus { border-color: var(--accent2); }
+
+    select:focus {
+      border-color: var(--accent2);
+    }
 
     /* Metrics column */
-    .metrics { display: flex; flex-direction: column; gap: 8px; }
+    .metrics {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
     .metric-card {
       background: var(--bg3);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 10px 12px;
     }
+
     .metric-label {
-      font-size: 0.66rem; color: var(--muted);
-      text-transform: uppercase; letter-spacing: 0.1em;
+      font-size: 0.66rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
       margin-bottom: 3px;
     }
+
     .metric-val {
-      font-family: var(--mono); font-size: 1.1rem; font-weight: 700;
+      font-family: var(--mono);
+      font-size: 1.1rem;
+      font-weight: 700;
       color: var(--text);
     }
-    .metric-val.positive { color: var(--yes); }
-    .metric-val.negative { color: var(--no); }
+
+    .metric-val.positive {
+      color: var(--yes);
+    }
+
+    .metric-val.negative {
+      color: var(--no);
+    }
 
     /* Toggles */
-    .strategy-list { display: flex; flex-direction: column; gap: 8px; }
+    .strategy-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
     .strategy-row {
-      display: flex; justify-content: space-between; align-items: center;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       padding: 7px 10px;
-      background: var(--bg3); border: 1px solid var(--border);
+      background: var(--bg3);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
     }
-    .strategy-name { font-size: 0.78rem; color: var(--text); }
-    .strategy-sub  { font-size: 0.62rem; color: var(--muted); }
+
+    .strategy-name {
+      font-size: 0.78rem;
+      color: var(--text);
+    }
+
+    .strategy-sub {
+      font-size: 0.62rem;
+      color: var(--muted);
+    }
+
     /* Toggle switch */
-    .toggle { position: relative; display: inline-block; width: 32px; height: 18px; }
-    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle {
+      position: relative;
+      display: inline-block;
+      width: 32px;
+      height: 18px;
+    }
+
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
     .slider {
-      position: absolute; inset: 0; cursor: pointer;
-      background: var(--border2); border-radius: 18px;
+      position: absolute;
+      inset: 0;
+      cursor: pointer;
+      background: var(--border2);
+      border-radius: 18px;
       transition: background .2s;
     }
+
     .slider::before {
       content: "";
       position: absolute;
-      left: 2px; top: 50%; transform: translateY(-50%);
-      width: 14px; height: 14px; border-radius: 50%;
-      background: var(--muted); transition: left .2s, background .2s;
+      left: 2px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--muted);
+      transition: left .2s, background .2s;
     }
-    .toggle input:checked + .slider { background: rgba(0,255,136,0.25); border: 1px solid var(--accent); }
-    .toggle input:checked + .slider::before { left: 16px; background: var(--accent); }
+
+    .toggle input:checked+.slider {
+      background: rgba(0, 255, 136, 0.25);
+      border: 1px solid var(--accent);
+    }
+
+    .toggle input:checked+.slider::before {
+      left: 16px;
+      background: var(--accent);
+    }
 
     /* Quick trade */
-    .quick-trade { display: flex; flex-direction: column; gap: 8px; }
-    .input-field {
-      background: var(--bg3); border: 1px solid var(--border);
-      color: var(--text); padding: 8px 10px;
-      border-radius: var(--radius); font-family: var(--mono); font-size: 0.78rem;
-      outline: none; width: 100%;
+    .quick-trade {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
-    .input-field:focus { border-color: var(--accent2); }
-    .input-field::placeholder { color: var(--muted); }
+
+    .input-field {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: var(--radius);
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      outline: none;
+      width: 100%;
+    }
+
+    .input-field:focus {
+      border-color: var(--accent2);
+    }
+
+    .input-field::placeholder {
+      color: var(--muted);
+    }
 
     /* ── Content sections ────────────────────────────────────────────────── */
     .section-head {
-      display: flex; align-items: center; justify-content: space-between;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       margin-bottom: 12px;
     }
+
     .section-title {
-      font-family: var(--mono); font-size: 0.72rem;
-      letter-spacing: 0.12em; text-transform: uppercase;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
       color: var(--accent2);
     }
+
     .section-action {
-      font-family: var(--mono); font-size: 0.65rem; cursor: pointer;
-      color: var(--muted); background: none; border: none;
-      padding: 4px 10px; border-radius: var(--radius);
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      cursor: pointer;
+      color: var(--muted);
+      background: none;
+      border: none;
+      padding: 4px 10px;
+      border-radius: var(--radius);
       border: 1px solid var(--border);
       transition: color .15s, border-color .15s;
     }
-    .section-action:hover { color: var(--accent); border-color: var(--accent); }
-    .section-action:disabled { opacity: .4; cursor: not-allowed; }
+
+    .section-action:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .section-action:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+    }
 
     /* ── Tables ─────────────────────────────────────────────────────────── */
     .table-wrap {
       overflow-x: auto;
-      border: 1px solid var(--border); border-radius: var(--radius);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
     }
+
     table {
-      width: 100%; border-collapse: collapse;
+      width: 100%;
+      border-collapse: collapse;
       font-size: 0.8rem;
     }
+
     thead tr {
       background: var(--bg3);
       border-bottom: 1px solid var(--border2);
     }
+
     th {
-      padding: 9px 12px; text-align: left;
-      font-family: var(--mono); font-size: 0.62rem;
-      letter-spacing: 0.1em; text-transform: uppercase;
-      color: var(--muted); white-space: nowrap;
+      padding: 9px 12px;
+      text-align: left;
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      white-space: nowrap;
     }
+
     td {
       padding: 8px 12px;
-      border-bottom: 1px solid rgba(30,45,61,0.5);
+      border-bottom: 1px solid rgba(30, 45, 61, 0.5);
       color: var(--text);
       vertical-align: middle;
     }
-    tbody tr:last-child td { border-bottom: none; }
-    tbody tr:hover td { background: rgba(255,255,255,0.02); }
 
-    .q-cell { max-width: 320px; }
-    .mono    { font-family: var(--mono); font-size: 0.75rem; }
-    .pos     { color: var(--yes); }
-    .neg     { color: var(--no); }
-    .empty   { text-align: center; color: var(--muted); padding: 20px; }
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .q-cell {
+      max-width: 320px;
+    }
+
+    .mono {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+    }
+
+    .pos {
+      color: var(--yes);
+    }
+
+    .neg {
+      color: var(--no);
+    }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 20px;
+    }
 
     /* Probability bar */
     .prob-bar-wrap {
-      position: relative; width: 120px; height: 18px;
-      background: var(--border); border-radius: 3px; overflow: hidden;
+      position: relative;
+      width: 120px;
+      height: 18px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
     }
+
     .prob-bar {
       height: 100%;
-      background: linear-gradient(90deg, rgba(0,255,136,0.3), rgba(0,255,136,0.5));
-      border-radius: 3px; transition: width .5s ease;
+      background: linear-gradient(90deg, rgba(0, 255, 136, 0.3), rgba(0, 255, 136, 0.5));
+      border-radius: 3px;
+      transition: width .5s ease;
     }
+
     .prob-label {
-      position: absolute; inset: 0;
-      display: flex; align-items: center; justify-content: center;
-      font-family: var(--mono); font-size: 0.7rem; color: var(--text);
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--text);
     }
 
     /* Trade buttons */
-    .trade-btns { display: flex; gap: 6px; }
-    .btn-yes, .btn-no {
-      padding: 4px 10px; border-radius: var(--radius);
-      font-family: var(--mono); font-size: 0.65rem; cursor: pointer;
-      border: none; font-weight: 700; letter-spacing: 0.05em;
+    .trade-btns {
+      display: flex;
+      gap: 6px;
+    }
+
+    .btn-yes,
+    .btn-no {
+      padding: 4px 10px;
+      border-radius: var(--radius);
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      cursor: pointer;
+      border: none;
+      font-weight: 700;
+      letter-spacing: 0.05em;
       transition: opacity .15s, transform .1s;
     }
-    .btn-yes:hover, .btn-no:hover { opacity: .8; transform: scale(0.97); }
-    .btn-yes { background: rgba(0,255,136,0.15); color: var(--yes); border: 1px solid rgba(0,255,136,0.3); }
-    .btn-no  { background: rgba(244,63,94,0.15);  color: var(--no);  border: 1px solid rgba(244,63,94,0.3); }
+
+    .btn-yes:hover,
+    .btn-no:hover {
+      opacity: .8;
+      transform: scale(0.97);
+    }
+
+    .btn-yes {
+      background: rgba(0, 255, 136, 0.15);
+      color: var(--yes);
+      border: 1px solid rgba(0, 255, 136, 0.3);
+    }
+
+    .btn-no {
+      background: rgba(244, 63, 94, 0.15);
+      color: var(--no);
+      border: 1px solid rgba(244, 63, 94, 0.3);
+    }
 
     /* Badge */
     .badge {
-      font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.08em;
-      padding: 2px 7px; border-radius: 100px; text-transform: uppercase;
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.08em;
+      padding: 2px 7px;
+      border-radius: 100px;
+      text-transform: uppercase;
     }
-    .badge-active   { background: rgba(0,255,136,0.12); color: var(--yes); border: 1px solid rgba(0,255,136,0.3); }
-    .badge-resolved { background: rgba(74,96,128,0.2);  color: var(--muted); border: 1px solid var(--border2); }
+
+    .badge-active {
+      background: rgba(0, 255, 136, 0.12);
+      color: var(--yes);
+      border: 1px solid rgba(0, 255, 136, 0.3);
+    }
+
+    .badge-resolved {
+      background: rgba(74, 96, 128, 0.2);
+      color: var(--muted);
+      border: 1px solid var(--border2);
+    }
 
     /* ── Arb scanner ─────────────────────────────────────────────────────── */
-    .arb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+    .arb-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+    }
+
     .arb-card {
-      background: var(--bg3); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 12px 14px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
     }
-    .arb-card:hover { border-color: var(--warn); }
-    .arb-q   { font-size: 0.8rem; margin-bottom: 8px; line-height: 1.4; }
+
+    .arb-card:hover {
+      border-color: var(--warn);
+    }
+
+    .arb-q {
+      font-size: 0.8rem;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+
     .arb-meta {
-      display: flex; gap: 10px; flex-wrap: wrap;
-      font-family: var(--mono); font-size: 0.68rem; color: var(--muted);
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--muted);
     }
-    .arb-edge { color: var(--warn); font-weight: 700; }
-    .empty-arb { color: var(--muted); font-size: 0.8rem; padding: 12px 0; }
+
+    .arb-edge {
+      color: var(--warn);
+      font-weight: 700;
+    }
+
+    .empty-arb {
+      color: var(--muted);
+      font-size: 0.8rem;
+      padding: 12px 0;
+    }
 
     /* ── Config panel ────────────────────────────────────────────────────── */
     .config-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
     }
+
     .config-field label {
-      display: block; font-size: 0.67rem; text-transform: uppercase;
-      letter-spacing: 0.1em; color: var(--muted); margin-bottom: 4px;
+      display: block;
+      font-size: 0.67rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 4px;
     }
+
     .btn-save {
-      background: rgba(0,255,136,0.1); border: 1px solid var(--accent);
-      color: var(--accent); padding: 8px 22px; border-radius: var(--radius);
-      font-family: var(--mono); font-size: 0.72rem; cursor: pointer;
-      letter-spacing: 0.08em; transition: background .15s;
+      background: rgba(0, 255, 136, 0.1);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 8px 22px;
+      border-radius: var(--radius);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      cursor: pointer;
+      letter-spacing: 0.08em;
+      transition: background .15s;
       margin-top: 4px;
     }
-    .btn-save:hover { background: rgba(0,255,136,0.2); }
+
+    .btn-save:hover {
+      background: rgba(0, 255, 136, 0.2);
+    }
 
     /* ── Toasts ──────────────────────────────────────────────────────────── */
     #toasts {
-      position: fixed; bottom: 24px; right: 24px;
-      display: flex; flex-direction: column; gap: 8px; z-index: 10000;
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 10000;
     }
+
     .toast {
-      padding: 10px 16px; border-radius: var(--radius);
-      font-size: 0.78rem; opacity: 0;
-      transform: translateY(8px); transition: opacity .3s, transform .3s;
+      padding: 10px 16px;
+      border-radius: var(--radius);
+      font-size: 0.78rem;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity .3s, transform .3s;
       max-width: 320px;
     }
-    .toast.visible { opacity: 1; transform: translateY(0); }
-    .toast-success { background: rgba(0,255,136,0.12); border: 1px solid var(--yes); color: var(--yes); }
-    .toast-error   { background: rgba(244,63,94,0.12);  border: 1px solid var(--no);  color: var(--no); }
-    .toast-info    { background: rgba(14,165,233,0.12); border: 1px solid var(--accent2); color: var(--accent2); }
+
+    .toast.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast-success {
+      background: rgba(0, 255, 136, 0.12);
+      border: 1px solid var(--yes);
+      color: var(--yes);
+    }
+
+    .toast-error {
+      background: rgba(244, 63, 94, 0.12);
+      border: 1px solid var(--no);
+      color: var(--no);
+    }
+
+    .toast-info {
+      background: rgba(14, 165, 233, 0.12);
+      border: 1px solid var(--accent2);
+      color: var(--accent2);
+    }
 
     /* ── Two-column content grid ─────────────────────────────────────────── */
-    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-    @media (max-width: 1100px) { .row-2 { grid-template-columns: 1fr; } }
+    .row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 1100px) {
+      .row-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
     @media (max-width: 800px) {
-      .main { grid-template-columns: 1fr; }
-      .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+      .main {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
     }
   </style>
 </head>
+
 <body>
 
-<!-- ── Header ──────────────────────────────────────────────────────────────── -->
-<header class="header">
-  <div class="header-left">
-    <div class="logo">SIMMER<span>.BOT</span></div>
-    <span class="venue-badge" id="venue-badge">SIMMER</span>
-  </div>
-  <div class="header-right">
-    <div class="status-pill">
-      <span class="status-dot" id="status-dot"></span>
-      <span id="status-label">SYNCING</span>
+  <!-- ── Header ──────────────────────────────────────────────────────────────── -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">SIMMER<span>.BOT</span></div>
+      <span class="venue-badge" id="venue-badge">SIMMER</span>
     </div>
-    <button class="btn-icon" id="refresh-btn">↺ REFRESH</button>
-  </div>
-</header>
-
-<!-- ── Main layout ─────────────────────────────────────────────────────────── -->
-<div class="main">
-
-  <!-- Sidebar -->
-  <aside class="sidebar">
-
-    <!-- Venue -->
-    <div>
-      <div class="panel-label">Active Venue</div>
-      <select id="venue-select">
-        <option value="simmer">SIMMER (Paper)</option>
-        <option value="polymarket">POLYMARKET</option>
-        <option value="kalshi">KALSHI</option>
-      </select>
-    </div>
-
-    <!-- Portfolio metrics -->
-    <div>
-      <div class="panel-label">Portfolio</div>
-      <div class="metrics">
-        <div class="metric-card">
-          <div class="metric-label">Balance</div>
-          <div class="metric-val" id="balance">—</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-label">Total P&L</div>
-          <div class="metric-val" id="total-pnl">—</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-label">Exposure</div>
-          <div class="metric-val" id="exposure">—</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-label">Daily Used</div>
-          <div class="metric-val" id="daily-used">—</div>
-        </div>
+    <div class="header-right">
+      <div class="status-pill">
+        <span class="status-dot" id="status-dot"></span>
+        <span id="status-label">SYNCING</span>
       </div>
+      <button class="btn-icon" id="refresh-btn">↺ REFRESH</button>
     </div>
+  </header>
 
-    <!-- Strategy toggles -->
-    <div>
-      <div class="panel-label">Strategies</div>
-      <div class="strategy-list">
-        <div class="strategy-row">
-          <div>
-            <div class="strategy-name">A · YES/NO Arb</div>
-            <div class="strategy-sub">every 2 min</div>
+  <!-- ── Main layout ─────────────────────────────────────────────────────────── -->
+  <div class="main">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+
+      <!-- Venue -->
+      <div>
+        <div class="panel-label">Active Venue</div>
+        <select id="venue-select">
+          <option value="simmer">SIMMER (Paper)</option>
+          <option value="polymarket">POLYMARKET</option>
+          <option value="kalshi">KALSHI</option>
+        </select>
+      </div>
+
+      <!-- Portfolio metrics -->
+      <div>
+        <div class="panel-label">Portfolio</div>
+        <div class="metrics">
+          <div class="metric-card">
+            <div class="metric-label">Balance</div>
+            <div class="metric-val" id="balance">—</div>
           </div>
-          <label class="toggle"><input type="checkbox" id="toggle-arb" onchange="saveConfig()"><span class="slider"></span></label>
-        </div>
-        <div class="strategy-row">
-          <div>
-            <div class="strategy-name">B · Market Making</div>
-            <div class="strategy-sub">every 30 min</div>
+          <div class="metric-card">
+            <div class="metric-label">Total P&L</div>
+            <div class="metric-val" id="total-pnl">—</div>
           </div>
-          <label class="toggle"><input type="checkbox" id="toggle-mm" onchange="saveConfig()"><span class="slider"></span></label>
-        </div>
-        <div class="strategy-row">
-          <div>
-            <div class="strategy-name">C · AI Prob Arb</div>
-            <div class="strategy-sub">every 15 min</div>
+          <div class="metric-card">
+            <div class="metric-label">Exposure</div>
+            <div class="metric-val" id="exposure">—</div>
           </div>
-          <label class="toggle"><input type="checkbox" id="toggle-ai" onchange="saveConfig()"><span class="slider"></span></label>
-        </div>
-        <div class="strategy-row">
-          <div>
-            <div class="strategy-name">D · Correlation</div>
-            <div class="strategy-sub">every 10 min</div>
+          <div class="metric-card">
+            <div class="metric-label">Daily Used</div>
+            <div class="metric-val" id="daily-used">—</div>
           </div>
-          <label class="toggle"><input type="checkbox" id="toggle-corr" onchange="saveConfig()"><span class="slider"></span></label>
         </div>
       </div>
-    </div>
 
-    <!-- Quick trade -->
-    <div>
-      <div class="panel-label">Quick Trade</div>
-      <div class="quick-trade">
-        <input class="input-field" id="quick-amount" type="number" placeholder="Amount $" value="10" min="1" max="100"/>
-        <input class="input-field" id="quick-reason" type="text" placeholder="Reason (optional)"/>
-        <div style="font-size:0.65rem;color:var(--muted);">Click YES / NO on any market row →</div>
+      <!-- Strategy toggles -->
+      <div>
+        <div class="panel-label">Strategies</div>
+        <div class="strategy-list">
+          <div class="strategy-row">
+            <div>
+              <div class="strategy-name">A · YES/NO Arb</div>
+              <div class="strategy-sub">every 2 min</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="toggle-arb" onchange="saveConfig()"><span
+                class="slider"></span></label>
+          </div>
+          <div class="strategy-row">
+            <div>
+              <div class="strategy-name">B · Market Making</div>
+              <div class="strategy-sub">every 30 min</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="toggle-mm" onchange="saveConfig()"><span
+                class="slider"></span></label>
+          </div>
+          <div class="strategy-row">
+            <div>
+              <div class="strategy-name">C · AI Prob Arb</div>
+              <div class="strategy-sub">every 15 min</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="toggle-ai" onchange="saveConfig()"><span
+                class="slider"></span></label>
+          </div>
+          <div class="strategy-row">
+            <div>
+              <div class="strategy-name">D · Correlation</div>
+              <div class="strategy-sub">every 10 min</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="toggle-corr" onchange="saveConfig()"><span
+                class="slider"></span></label>
+          </div>
+        </div>
       </div>
-    </div>
 
-  </aside>
-
-  <!-- Content -->
-  <main class="content">
-
-    <!-- Markets table -->
-    <div>
-      <div class="section-head">
-        <span class="section-title">Active Markets</span>
-        <button class="section-action" id="arb-scan-btn">⚡ Scan Arb</button>
+      <!-- Quick trade -->
+      <div>
+        <div class="panel-label">Quick Trade</div>
+        <div class="quick-trade">
+          <input class="input-field" id="quick-amount" type="number" placeholder="Amount $" value="10" min="1"
+            max="100" />
+          <input class="input-field" id="quick-reason" type="text" placeholder="Reason (optional)" />
+          <div style="font-size:0.65rem;color:var(--muted);">Click YES / NO on any market row →</div>
+        </div>
       </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Question</th>
-              <th>YES Probability</th>
-              <th>Divergence</th>
-              <th>Resolves</th>
-              <th>Trade</th>
-            </tr>
-          </thead>
-          <tbody id="markets-body">
-            <tr><td colspan="5" class="empty">Loading markets…</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
 
-    <!-- Arb results -->
-    <div id="arb-section">
-      <div class="section-head">
-        <span class="section-title">Arbitrage Opportunities</span>
-      </div>
-      <div class="arb-grid" id="arb-results">
-        <p class="empty-arb">Press "Scan Arb" to find YES+NO gaps.</p>
-      </div>
-    </div>
+    </aside>
 
-    <!-- Positions + Trade log -->
-    <div class="row-2">
+    <!-- Content -->
+    <main class="content">
 
-      <!-- Positions -->
+      <!-- Markets table -->
       <div>
         <div class="section-head">
-          <span class="section-title">Open Positions</span>
+          <span class="section-title">Active Markets</span>
+          <button class="section-action" id="arb-scan-btn">⚡ Scan Arb</button>
         </div>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>Market</th>
-                <th>YES</th>
-                <th>NO</th>
-                <th>Value</th>
-                <th>P&L</th>
-                <th>Status</th>
+                <th>Question</th>
+                <th>YES Probability</th>
+                <th>Divergence</th>
+                <th>Resolves</th>
+                <th>Trade</th>
               </tr>
             </thead>
-            <tbody id="positions-body">
-              <tr><td colspan="6" class="empty">Loading…</td></tr>
+            <tbody id="markets-body">
+              <tr>
+                <td colspan="5" class="empty">Loading markets…</td>
+              </tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      <!-- Trade log -->
+      <!-- Arb results -->
+      <div id="arb-section">
+        <div class="section-head">
+          <span class="section-title">Arbitrage Opportunities</span>
+        </div>
+        <div class="arb-grid" id="arb-results">
+          <p class="empty-arb">Press "Scan Arb" to find YES+NO gaps.</p>
+        </div>
+      </div>
+
+      <!-- Positions + Trade log -->
+      <div class="row-2">
+
+        <!-- Positions -->
+        <div>
+          <div class="section-head">
+            <span class="section-title">Open Positions</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Market</th>
+                  <th>YES</th>
+                  <th>NO</th>
+                  <th>Value</th>
+                  <th>P&L</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="positions-body">
+                <tr>
+                  <td colspan="6" class="empty">Loading…</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Trade log -->
+        <div>
+          <div class="section-head">
+            <span class="section-title">Trade Log</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Market</th>
+                  <th>Side</th>
+                  <th>Amount</th>
+                  <th>Shares</th>
+                </tr>
+              </thead>
+              <tbody id="log-body">
+                <tr>
+                  <td colspan="5" class="empty">No trades this session</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Config -->
       <div>
         <div class="section-head">
-          <span class="section-title">Trade Log</span>
+          <span class="section-title">Bot Configuration</span>
+          <button class="section-action" id="save-config-btn">💾 Save</button>
         </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Time</th>
-                <th>Market</th>
-                <th>Side</th>
-                <th>Amount</th>
-                <th>Shares</th>
-              </tr>
-            </thead>
-            <tbody id="log-body">
-              <tr><td colspan="5" class="empty">No trades this session</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- Config -->
-    <div>
-      <div class="section-head">
-        <span class="section-title">Bot Configuration</span>
-        <button class="section-action" id="save-config-btn">💾 Save</button>
-      </div>
-      <div class="config-grid">
-        <div class="config-field">
-          <label>Max per trade ($)</label>
-          <input class="input-field" type="number" id="cfg-max-trade" min="1" max="100"/>
-        </div>
-        <div class="config-field">
-          <label>Max daily ($)</label>
-          <input class="input-field" type="number" id="cfg-max-daily" min="10" max="500"/>
-        </div>
-        <div class="config-field">
-          <label>Min arb edge (%)</label>
-          <input class="input-field" type="number" id="cfg-min-edge" step="0.1" min="0.5" max="10"/>
-        </div>
-        <div class="config-field">
-          <label>Default venue</label>
-          <select class="input-field" id="cfg-venue">
-            <option value="simmer">simmer</option>
-            <option value="polymarket">polymarket</option>
-            <option value="kalshi">kalshi</option>
-          </select>
+        <div class="config-grid">
+          <div class="config-field">
+            <label>Max per trade ($)</label>
+            <input class="input-field" type="number" id="cfg-max-trade" min="1" max="100" />
+          </div>
+          <div class="config-field">
+            <label>Max daily ($)</label>
+            <input class="input-field" type="number" id="cfg-max-daily" min="10" max="500" />
+          </div>
+          <div class="config-field">
+            <label>Min arb edge (%)</label>
+            <input class="input-field" type="number" id="cfg-min-edge" step="0.1" min="0.5" max="10" />
+          </div>
+          <div class="config-field">
+            <label>Default venue</label>
+            <select class="input-field" id="cfg-venue">
+              <option value="simmer">simmer</option>
+              <option value="polymarket">polymarket</option>
+              <option value="kalshi">kalshi</option>
+            </select>
+          </div>
         </div>
       </div>
-    </div>
 
-  </main>
-</div>
+    </main>
+  </div>
 
-<!-- Toast container -->
-<div id="toasts"></div>
+  <!-- Toast container -->
+  <div id="toasts"></div>
 
-<!-- Scripts -->
-<script src="js/config.js"></script>
-<script src="js/api.js"></script>
-<script src="js/app.js"></script>
+  <!-- Scripts -->
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
 </body>
+
 </html>
