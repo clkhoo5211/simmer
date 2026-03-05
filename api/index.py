@@ -14,6 +14,7 @@ from loguru import logger
 
 from core.client import get_client
 from core.risk import daily_spent, MAX_TRADE, MAX_DAILY, check_limits, stop_loss_triggered
+from core.store import load_config, save_config
 from strategies.arb_yesno   import run_arb_cycle, run_cross_platform_arb
 from strategies.market_maker import run_market_making
 from strategies.ai_prob      import run_ai_prob_cycle
@@ -74,8 +75,8 @@ class ConfigUpdate(BaseModel):
     strategy_correlation: bool  | None = None
 
 
-# Runtime config (in-memory; persists per container warm instance)
-_config = {
+# Runtime config — loaded from Redis on cold start, falls back to defaults
+_DEFAULTS = {
     "default_venue":        os.environ.get("DEFAULT_VENUE", "simmer"),
     "max_trade_usd":        MAX_TRADE,
     "max_daily_usd":        MAX_DAILY,
@@ -85,6 +86,7 @@ _config = {
     "strategy_ai":          False,
     "strategy_correlation": True,
 }
+_config = load_config(_DEFAULTS)
 
 
 # ── Health ────────────────────────────────────────────────────────────────────
@@ -237,6 +239,7 @@ def get_config():
 def update_config(body: ConfigUpdate):
     for field, val in body.model_dump(exclude_none=True).items():
         _config[field] = val
+    save_config(_config)   # ← persist to Upstash Redis so toggles survive cold starts
     logger.info(f"⚙️  Config updated: {body.model_dump(exclude_none=True)}")
     return _config
 
