@@ -20,21 +20,28 @@ _TIMEOUT   = 3   # seconds — fast enough for serverless cold start
 
 
 def _redis_request(command: str, *args):
-    """Call the Upstash Redis REST API with a command and arguments."""
+    """Call the Upstash Redis REST API with a command and arguments.
+
+    Correct format: POST {base_url} with body ["COMMAND", "arg1", "arg2", ...]
+    Vercel's Upstash integration sets KV_REST_API_URL and KV_REST_API_TOKEN.
+    """
     # Vercel's native Upstash Redis integration sets these env vars:
     url   = os.environ.get("KV_REST_API_URL") or os.environ.get("UPSTASH_REDIS_REST_URL")
     token = os.environ.get("KV_REST_API_TOKEN") or os.environ.get("UPSTASH_REDIS_REST_TOKEN")
     if not url or not token:
         return None  # Redis not configured — graceful fallback
     try:
+        # Upstash REST API: the full command + args goes in the POST body
         resp = requests.post(
-            f"{url}/{command}",
-            json=list(args),
+            url,                              # base URL only (no path suffix)
+            json=[command] + list(args),      # e.g. ["set", "simmer:config", "{...}"]
             headers={"Authorization": f"Bearer {token}"},
             timeout=_TIMEOUT,
         )
         if resp.ok:
             return resp.json().get("result")
+        else:
+            logger.warning(f"Redis error {resp.status_code}: {resp.text[:200]}")
     except Exception as exc:
         logger.warning(f"Redis request failed: {exc}")
     return None
