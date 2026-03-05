@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://simmer-backend.vercel.app; img-src 'self' data:;" />
+
+  <title>Simmer Bot — Credentials</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap"
+    rel="stylesheet" />
+  <style>
+    /* ── Reset & Variables ─────────────────────────────────────────────── */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #080c10;
+      --bg2: #0d1117;
+      --bg3: #131b24;
+      --border: #1e2d3d;
+      --border2: #243447;
+      --text: #c8d6e5;
+      --muted: #4a6080;
+      --accent: #00ff88;
+      --accent2: #0ea5e9;
+      --warn: #f59e0b;
+      --danger: #f43f5e;
+      --yes: #00ff88;
+      --no: #f43f5e;
+      --mono: 'Space Mono', monospace;
+      --sans: 'DM Sans', sans-serif;
+      --radius: 6px;
+      --glow: 0 0 16px rgba(0, 255, 136, 0.15);
+    }
+
+    html {
+      font-size: 14px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Scrollbar ──────────────────────────────────────────────────────── */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg2);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border2);
+      border-radius: 3px;
+    }
+
+    /* ── Scan-line overlay ─────────────────────────────────────────────── */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(0deg,
+          transparent,
+          transparent 2px,
+          rgba(0, 0, 0, 0.08) 2px,
+          rgba(0, 0, 0, 0.08) 4px);
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ── Header ─────────────────────────────────────────────────────────── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 28px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo {
+      font-family: var(--mono);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.08em;
+      text-shadow: 0 0 12px rgba(0, 255, 136, 0.4);
+      text-decoration: none;
+    }
+
+    .logo span {
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .btn-icon {
+      background: transparent;
+      border: 1px solid var(--border2);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      padding: 6px 12px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .btn-icon:hover {
+      border-color: var(--text);
+      background: var(--bg3);
+    }
+
+    /* ── Main layout ─────────────────────────────────────────────────────── */
+    .main {
+      padding: 28px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .page-title {
+      font-family: var(--mono);
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+      color: var(--text);
+      letter-spacing: 0.05em;
+    }
+
+    .page-subtitle {
+      color: var(--muted);
+      margin-bottom: 32px;
+      font-size: 0.9rem;
+    }
+
+    /* ── Cards ───────────────────────────────────────────────────────────── */
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg3);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-title {
+      font-family: var(--mono);
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--accent2);
+      letter-spacing: 0.05em;
+    }
+
+    .status-badge {
+      font-size: 0.7rem;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-family: var(--mono);
+    }
+
+    .status-badge.configured {
+      background: rgba(0, 255, 136, 0.1);
+      color: var(--accent);
+      border: 1px solid rgba(0, 255, 136, 0.2);
+    }
+
+    .status-badge.missing {
+      background: rgba(244, 63, 94, 0.1);
+      color: var(--danger);
+      border: 1px solid rgba(244, 63, 94, 0.2);
+    }
+
+    .card-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .control-group label {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .control-group input {
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: var(--radius);
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .control-group input:focus {
+      border-color: var(--accent2);
+    }
+
+    .control-group input::placeholder {
+      color: #2a3a4a;
+    }
+
+    /* ── Actions ─────────────────────────────────────────────────────────── */
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 16px;
+    }
+
+    .btn-primary {
+      background: rgba(0, 255, 136, 0.1);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 10px 24px;
+      border-radius: var(--radius);
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: all 0.2s;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent);
+      color: var(--bg);
+      box-shadow: var(--glow);
+    }
+
+    /* ── Toasts ──────────────────────────────────────────────────────────── */
+    .toasts {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 9999;
+    }
+
+    .toast {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 20px;
+      border-radius: var(--radius);
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s;
+    }
+
+    .toast.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast-success {
+      border-left: 3px solid var(--accent);
+    }
+
+    .toast-error {
+      border-left: 3px solid var(--danger);
+    }
+
+    .toast-info {
+      border-left: 3px solid var(--accent2);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ── Header ──────────────────────────────────────────────────────────────── -->
+  <header class="header">
+    <div class="header-left">
+      <a href="index.html" class="logo">SIMMER<span>.BOT</span></a>
+    </div>
+    <div class="header-right">
+      <a href="index.html" class="btn-icon">⬅ BACK TO DASHBOARD</a>
+    </div>
+  </header>
+
+  <!-- ── Main layout ─────────────────────────────────────────────────────────── -->
+  <div class="main">
+    <h1 class="page-title">API Credentials</h1>
+    <p class="page-subtitle">Configure your keys for each venue. Stored securely in your backend Upstash Redis.</p>
+
+    <!-- Simmer -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">SIMMER (Paper Trading)</div>
+        <div class="status-badge missing" id="status-simmer">Missing</div>
+      </div>
+      <div class="card-body">
+        <div class="control-group">
+          <label>Simmer API Key</label>
+          <input type="password" id="simmer_api_key" placeholder="sk_live_..." autocomplete="off">
+        </div>
+      </div>
+    </div>
+
+    <!-- Polymarket -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">POLYMARKET (Real USDC)</div>
+        <div class="status-badge missing" id="status-polymarket">Missing</div>
+      </div>
+      <div class="card-body">
+        <div class="control-group">
+          <label>Wallet Private Key (EVM)</label>
+          <input type="password" id="wallet_private_key" placeholder="0x..." autocomplete="off">
+        </div>
+        <div class="control-group">
+          <label>Polymarket CLOB API Key</label>
+          <input type="password" id="polymarket_api_key" placeholder="..." autocomplete="off">
+        </div>
+        <div class="control-group">
+          <label>Polymarket CLOB Secret</label>
+          <input type="password" id="polymarket_api_secret" placeholder="..." autocomplete="off">
+        </div>
+        <div class="control-group">
+          <label>Polymarket CLOB Passphrase</label>
+          <input type="password" id="polymarket_passphrase" placeholder="..." autocomplete="off">
+        </div>
+        <div class="control-group">
+          <label>Wallet Address (Public)</label>
+          <input type="text" id="polymarket_wallet_addr" placeholder="0x..." autocomplete="off">
+        </div>
+      </div>
+    </div>
+
+    <!-- Kalshi -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">KALSHI (Real USD via USDC on Solana)</div>
+        <div class="status-badge missing" id="status-kalshi">Missing</div>
+      </div>
+      <div class="card-body">
+        <div class="control-group">
+          <label>Solana Private Key (Base58)</label>
+          <input type="password" id="solana_private_key" placeholder="..." autocomplete="off">
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn-primary" id="save-btn">SAVE CREDENTIALS</button>
+    </div>
+
+  </div>
+
+  <div class="toasts" id="toasts"></div>
+
+  <!-- Scripts -->
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/settings.js"></script>
+</body>
+
+</html>
