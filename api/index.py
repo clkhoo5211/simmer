@@ -69,6 +69,7 @@ class ConfigUpdate(BaseModel):
     max_daily_usd:        float | None = None
     min_arb_edge:         float | None = None
     default_venue:        str   | None = None
+    automation_enabled:   bool  | None = None   # Master automation switch
     strategy_arb:         bool  | None = None
     strategy_mm:          bool  | None = None
     strategy_ai:          bool  | None = None
@@ -81,6 +82,7 @@ _DEFAULTS = {
     "max_trade_usd":        MAX_TRADE,
     "max_daily_usd":        MAX_DAILY,
     "min_arb_edge":         float(os.environ.get("MIN_ARB_EDGE", "0.015")),
+    "automation_enabled":   False,   # ← must be turned ON from dashboard
     "strategy_arb":         True,
     "strategy_mm":          True,
     "strategy_ai":          False,
@@ -253,54 +255,58 @@ def arb_scan(venue: str = ""):
 
 
 # ── Cron Endpoints (called by Vercel scheduler) ───────────────────────────────
-@app.get("/cron/arb", dependencies=[Depends(verify_cron)])
-def cron_arb():
-    if not _config.get("strategy_arb"):
-        return {"skipped": "strategy disabled"}
+def _automation_check():
+    """Returns a skip-response dict if master automation is off, else None."""
+    if not _config.get("automation_enabled"):
+        return {"skipped": "automation disabled — enable in dashboard"}
     if stop_loss_triggered():
         return {"skipped": "stop loss active"}
+    return None
+
+
+@app.get("/cron/arb", dependencies=[Depends(verify_cron)])
+def cron_arb():
+    skip = _automation_check()
+    if skip: return skip
+    if not _config.get("strategy_arb"):
+        return {"skipped": "strategy disabled"}
     return {"results": run_arb_cycle(_config["default_venue"])}
 
 
 @app.get("/cron/correlation", dependencies=[Depends(verify_cron)])
 def cron_correlation():
+    skip = _automation_check()
+    if skip: return skip
     if not _config.get("strategy_correlation"):
         return {"skipped": "strategy disabled"}
-    if stop_loss_triggered():
-        return {"skipped": "stop loss active"}
     return {"results": run_correlation_cycle(_config["default_venue"])}
 
 
 @app.get("/cron/ai-prob", dependencies=[Depends(verify_cron)])
 def cron_ai_prob():
+    skip = _automation_check()
+    if skip: return skip
     if not _config.get("strategy_ai"):
         return {"skipped": "strategy disabled"}
-    if stop_loss_triggered():
-        return {"skipped": "stop loss active"}
     return {"results": run_ai_prob_cycle(_config["default_venue"])}
 
 
 @app.get("/cron/market-making", dependencies=[Depends(verify_cron)])
 def cron_market_making():
+    skip = _automation_check()
+    if skip: return skip
     if not _config.get("strategy_mm"):
         return {"skipped": "strategy disabled"}
-    if stop_loss_triggered():
-        return {"skipped": "stop loss active"}
-    # Fetch active market IDs and run MM on them
     client = get_client(_config["default_venue"])
     mkts   = client.get_markets(status="active", limit=20)
     ids    = [m.id for m in mkts]
     return {"results": run_market_making(ids, _config["default_venue"])}
 
+
 @app.get("/cron/weather", dependencies=[Depends(verify_cron)])
 def cron_weather():
-    """
-    Run the ClawHub Weather Trader skill.
-    """
-    if stop_loss_triggered():
-        return {"status": "skipped", "message": "stop loss active"}
-    
-    # Needs to match how get_client is imported in index.py
+    skip = _automation_check()
+    if skip: return skip
     client = get_client(_config["default_venue"])
     result = run_weather_strategy(client, _config["default_venue"])
     return result
