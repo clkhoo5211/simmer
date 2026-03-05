@@ -21,8 +21,9 @@ _TIMEOUT   = 3   # seconds — fast enough for serverless cold start
 
 def _redis_request(command: str, *args):
     """Call the Upstash Redis REST API with a command and arguments."""
-    url   = os.environ.get("UPSTASH_REDIS_REST_URL")
-    token = os.environ.get("UPSTASH_REDIS_REST_TOKEN")
+    # Vercel's native Upstash Redis integration sets these env vars:
+    url   = os.environ.get("KV_REST_API_URL") or os.environ.get("UPSTASH_REDIS_REST_URL")
+    token = os.environ.get("KV_REST_API_TOKEN") or os.environ.get("UPSTASH_REDIS_REST_TOKEN")
     if not url or not token:
         return None  # Redis not configured — graceful fallback
     try:
