@@ -23,7 +23,7 @@ from strategies.clawhub_weather import run_weather_strategy
 # ── App setup ─────────────────────────────────────────────────────────────────
 app = FastAPI(title="Simmer Trading Bot API", version="1.0.0")
 
-DASHBOARD_ORIGIN = os.environ.get("DASHBOARD_ORIGIN", "https://YOUR_GH_PAGES_URL")
+DASHBOARD_ORIGIN = os.environ.get("DASHBOARD_ORIGIN", "https://clkhoo5211.github.io")
 CRON_SECRET      = os.environ.get("CRON_SECRET", "")
 
 app.add_middleware(
