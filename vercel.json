@@ -30,17 +30,5 @@
       "schedule": "0 0 * * *"
     }
   ],
-  "env": {
-    "SIMMER_API_KEY": "@simmer_api_key",
-    "SIMMER_PRIVATE_KEY": "@simmer_private_key",
-    "SIMMER_SOLANA_KEY": "@simmer_solana_key",
-    "OPENAI_API_KEY": "@openai_api_key",
-    "ANTHROPIC_API_KEY": "@anthropic_api_key",
-    "DEFAULT_VENUE": "@default_venue",
-    "MAX_TRADE_USD": "@max_trade_usd",
-    "MAX_DAILY_USD": "@max_daily_usd",
-    "MIN_ARB_EDGE": "@min_arb_edge",
-    "DASHBOARD_ORIGIN": "@dashboard_origin",
-    "CRON_SECRET": "@cron_secret"
-  }
+]
 }
