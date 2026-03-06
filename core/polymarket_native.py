@@ -9,22 +9,26 @@ _clob_client = None
 def get_native_clob_client() -> ClobClient:
     global _clob_client
     if _clob_client is None:
-        creds = load_credentials()
+        from py_clob_client.clob_types import ApiCreds
+        creds_data = load_credentials()
         
-        pkey = creds.get("wallet_private_key") or os.environ.get("WALLET_PRIVATE_KEY") or os.environ.get("SIMMER_PRIVATE_KEY")
+        pkey = creds_data.get("wallet_private_key") or os.environ.get("WALLET_PRIVATE_KEY") or os.environ.get("SIMMER_PRIVATE_KEY")
         if not pkey:
             raise ValueError("Missing WALLET_PRIVATE_KEY for Polymarket native client")
+
+        # Must use ApiCreds object for Level 2 Auth
+        api_creds = ApiCreds(
+            api_key=creds_data.get("polymarket_api_key", ""),
+            api_secret=creds_data.get("polymarket_api_secret", ""),
+            api_passphrase=creds_data.get("polymarket_passphrase", "")
+        )
 
         _clob_client = ClobClient(
             host="https://clob.polymarket.com",
             key=pkey,
             chain_id=137,
-            signature_type=int(creds.get("polymarket_sig_type", 2)),
-            creds={
-                "key": creds.get("polymarket_api_key", ""),
-                "secret": creds.get("polymarket_api_secret", ""),
-                "passphrase": creds.get("polymarket_passphrase", "")
-            }
+            signature_type=int(creds_data.get("polymarket_sig_type", 2)),
+            creds=api_creds
         )
     return _clob_client
 
@@ -143,36 +147,41 @@ def place_native_order(market_id: str, side: str, amount: float) -> dict:
     """Place a native order on Polymarket CLOB."""
     client = get_native_clob_client()
     
-    # Polymarket uses 'buy' or 'sell'
-    # Simmer uses 'yes' or 'no'
-    # We need to map correctly. 
-    # Usually: Buy Yes = Buy Outcome ID for Yes.
-    # For simplicity, we assume the market_id passed is the token ID / condition ID.
-    
     try:
-        from py_clob_client.constants import BUY
+        from py_clob_client.clob_types import OrderArgs
         
-        # This is a placeholder for actual order placement logic which varies by market type
-        # In a real scenario, we'd fetch the token IDs for the market first.
-        # For now, we use the client.create_order and client.post_order
+        # For verification, we try to place a buy order on the specified token_id
+        logger.info(f"Attempting real Polymarket CLOB order: {side} {amount} on {market_id}")
         
-        logger.info(f"Placing native Polymarket {side} order for {amount} on {market_id}")
+        # At $0.01 price, $5 buys 500 shares
+        price = 0.01
+        size = amount / price
         
-        # Example Buy Limit Order (simplified for demonstration of native capability)
-        # In production, this would involve price discovery and token ID resolution.
-        # result = client.post_order(...)
+        order_args = OrderArgs(
+            token_id=market_id,
+            price=price,
+            size=size,
+            side="BUY"
+        )
         
-        # For now, we'll mark it as a success call to the SDK to prove integration
+        order = client.create_order(order_args)
+        resp = client.post_order(order)
+        
         return {
-            "success": True,
-            "trade_id": "native_" + os.urandom(4).hex(),
+            "success": resp.get("success", False),
+            "trade_id": resp.get("orderID"),
             "market_id": market_id,
             "side": side,
-            "shares_bought": 0, # Would be calculated from fill
+            "shares_bought": 0,
             "cost": amount,
             "order_status": "placed",
-            "source": "native_clob"
+            "source": "native_clob",
+            "raw": resp
         }
     except Exception as e:
         logger.error(f"Native Polymarket trade failed: {e}")
-        raise e
+        return {
+            "success": False,
+            "error": str(e),
+            "source": "native_clob"
+        }
