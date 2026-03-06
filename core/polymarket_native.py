@@ -131,16 +131,17 @@ def get_native_markets(status: str = "active", limit: int = 25) -> list:
         raise
 
 def get_native_positions() -> list:
-    """Fetch structured positions dynamically based on Gamma."""
+    """Fetch structured positions dynamically based on Polymarket Data API."""
     creds = load_credentials()
     wallet_address = creds.get("polymarket_wallet_addr")
     
     if not wallet_address:
         raise ValueError("Missing polymarket_wallet_addr")
 
-    gamma_url = f"https://gamma-api.polymarket.com/users/{wallet_address}/positions"
+    # The Data API is more reliable for user-specific position summaries
+    data_url = f"https://data-api.polymarket.com/positions?user={wallet_address}&limit=500"
     try:
-        resp = requests.get(gamma_url, timeout=10)
+        resp = requests.get(data_url, timeout=10)
         resp.raise_for_status()
         positions_data = resp.json()
         
@@ -153,13 +154,40 @@ def get_native_positions() -> list:
                     "question": p.get("title", "Unknown Market"),
                     "shares_yes": size if p.get("outcome", "") == "Yes" else 0,
                     "shares_no": size if p.get("outcome", "") == "No" else 0,
-                    "current_value": size * getattr(p, "currentPrice", 0),
-                    "pnl": 0.0, # Math logic simplified
+                    "current_value": size * float(p.get("avgPrice", 0)),
+                    "pnl": float(p.get("realizedPnl", 0)),
                     "status": "open"
                 })
         return parsed
     except Exception as e:
         logger.warning(f"Native Polymarket get_positions failed: {e}")
+        raise
+
+def get_native_closed_positions() -> list:
+    """Fetch closed positions from Data API."""
+    creds = load_credentials()
+    wallet_address = creds.get("polymarket_wallet_addr")
+    
+    if not wallet_address:
+        raise ValueError("Missing polymarket_wallet_addr")
+
+    data_url = f"https://data-api.polymarket.com/closed-positions?user={wallet_address}&limit=500"
+    try:
+        resp = requests.get(data_url, timeout=10)
+        resp.raise_for_status()
+        closed_data = resp.json()
+        
+        parsed = []
+        for cp in closed_data:
+            parsed.append({
+                "market_id": cp.get("conditionId", "unknown"),
+                "question": cp.get("title", "Unknown Market"),
+                "pnl": float(cp.get("realizedPnl", 0)),
+                "status": "closed"
+            })
+        return parsed
+    except Exception as e:
+        logger.warning(f"Native Polymarket get_closed_positions failed: {e}")
         raise
 def place_native_order(market_id: str, side: str, amount: float) -> dict:
     """Place a native order on Polymarket CLOB."""
