@@ -1,35 +1,84 @@
-// js/settings.js — Logic for the credentials settings page
+// js/settings.js — Dynamic settings logic
+// ─────────────────────────────────────────────────────────────────────────────
+// Now centralized: fetches definitions from /api/settings/schema
+
+let currentSchema = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
-  await loadCredentials();
+  await initSettings();
   document.getElementById("save-btn")?.addEventListener("click", saveCredentials);
 });
 
-async function loadCredentials() {
+async function initSettings() {
+  const container = document.getElementById("settings-container");
   const btn = document.getElementById("save-btn");
-  if (btn) btn.textContent = "LOADING...";
+
+  if (btn) btn.textContent = "LOADING SCHEMA...";
 
   try {
-    const creds = await api.getCredentials();
+    // 1. Fetch schema and current creds in parallel
+    const [schema, creds] = await Promise.all([
+      api.getSettingsSchema(),
+      api.getCredentials()
+    ]);
+    currentSchema = schema;
 
-    // Fill placeholders with masked values
-    if (creds.simmer_api_key) setPlaceholder("simmer_api_key", creds.simmer_api_key);
-    if (creds.wallet_private_key) setPlaceholder("wallet_private_key", creds.wallet_private_key);
-    if (creds.polymarket_api_key) setPlaceholder("polymarket_api_key", creds.polymarket_api_key);
-    if (creds.polymarket_api_secret) setPlaceholder("polymarket_api_secret", creds.polymarket_api_secret);
-    if (creds.polymarket_passphrase) setPlaceholder("polymarket_passphrase", creds.polymarket_passphrase);
-    if (creds.polymarket_wallet_addr) setVal("polymarket_wallet_addr", creds.polymarket_wallet_addr);
-    if (creds.polymarket_sig_type) setVal("polymarket_sig_type", creds.polymarket_sig_type);
-    if (creds.solana_private_key) setPlaceholder("solana_private_key", creds.solana_private_key);
+    // 2. Build HTML dynamically
+    let html = "";
+    for (const category of schema) {
+      const isConfigured = creds.configured?.[category.id];
+      const badgeClass = isConfigured ? "configured" : "missing";
+      const badgeText = isConfigured ? "Configured" : "Missing";
 
-    // Update status badges
-    updateStatus("status-simmer", creds.configured.simmer);
-    updateStatus("status-polymarket", creds.configured.polymarket);
-    updateStatus("status-kalshi", creds.configured.kalshi);
+      html += `
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">${category.title}</div>
+            <div class="status-badge ${badgeClass}" id="status-${category.id}">${badgeText}</div>
+          </div>
+          <div class="card-body">
+      `;
+
+      for (const field of category.fields) {
+        const val = creds[field.id];
+        // If it's a secret and we have a masked value, use it as placeholder
+        const placeholder = field.secret && val ? val : (field.placeholder || "");
+
+        html += `
+          <div class="control-group">
+            <label>${field.label}</label>
+        `;
+
+        if (field.type === "select") {
+          html += `
+            <select id="${field.id}" style="background: var(--bg); border: 1px solid var(--border2); color: var(--text); padding: 10px 12px; border-radius: var(--radius); font-family: var(--mono); font-size: 0.85rem; outline: none;">
+              ${field.options.map(o => `<option value="${o.value}" ${val == o.value ? 'selected' : ''}>${o.label}</option>`).join('')}
+            </select>
+          `;
+        } else {
+          // Password fields are always empty on load (showing mask in placeholder)
+          // Text fields show the raw value if not secret
+          const displayVal = (!field.secret && val) ? val : "";
+          html += `
+            <input type="${field.type}" id="${field.id}" placeholder="${placeholder}" autocomplete="off" value="${displayVal}">
+          `;
+        }
+
+        if (field.description) {
+          html += `<p style="font-size: 0.7rem; color: var(--muted); margin-top: 4px;">${field.description}</p>`;
+        }
+
+        html += `</div>`;
+      }
+
+      html += `</div></div>`;
+    }
+
+    container.innerHTML = html;
 
   } catch (err) {
     console.error(err);
-    showToast("⚠️ Could not load credentials. Is backend running?", "error");
+    container.innerHTML = `<div style="color: var(--danger); padding: 40px; text-align: center;">⚠️ FAILED TO LOAD SECURE SCHEMA</div>`;
   } finally {
     if (btn) btn.textContent = "SAVE CREDENTIALS";
   }
@@ -37,71 +86,57 @@ async function loadCredentials() {
 
 async function saveCredentials() {
   const btn = document.getElementById("save-btn");
-  if (btn) btn.textContent = "SAVING...";
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "SAVING...";
+  }
 
-  // Only send fields that the user actually typed something into
   const body = {};
-  const fields = [
-    "simmer_api_key", "wallet_private_key", "polymarket_api_key",
-    "polymarket_api_secret", "polymarket_passphrase", "polymarket_wallet_addr",
-    "polymarket_sig_type", "solana_private_key"
-  ];
 
-  for (const f of fields) {
-    const val = getVal(f).trim();
-    if (val) body[f] = val;
+  // Iterate through all categories and fields in the dynamic schema
+  for (const cat of currentSchema) {
+    for (const field of cat.fields) {
+      const el = document.getElementById(field.id);
+      if (!el) continue;
+
+      const val = el.value.trim();
+      // Only send if user typed something (avoid sending masks back)
+      if (val) {
+        body[field.id] = val;
+      }
+    }
   }
 
   if (Object.keys(body).length === 0) {
     showToast("No new credentials to save", "info");
-    if (btn) btn.textContent = "SAVE CREDENTIALS";
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "SAVE CREDENTIALS";
+    }
     return;
   }
 
   try {
     const result = await api.updateCredentials(body);
     if (result.ok) {
-      showToast("✅ Credentials saved securely to Redis", "success");
-      // Clear inputs since they are now saved
-      fields.forEach(f => {
-        const el = document.getElementById(f);
-        if (el) el.value = "";
-      });
+      showToast("✅ Settings saved to Redis", "success");
       // Reload to show new masked placeholders and statuses
-      await loadCredentials();
+      await initSettings();
+    } else {
+      showToast("❌ Server rejected update", "error");
     }
   } catch (err) {
     console.error(err);
-    showToast("❌ Failed to save credentials", "error");
+    showToast("❌ Failed to contact backend", "error");
   } finally {
-    if (btn) btn.textContent = "SAVE CREDENTIALS";
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "SAVE CREDENTIALS";
+    }
   }
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function setPlaceholder(id, val) {
-  const e = document.getElementById(id);
-  if (e) e.placeholder = "Set via Vercel env or Redis: " + val;
-}
-function setVal(id, val) {
-  const e = document.getElementById(id);
-  if (e) e.value = val;
-}
-function getVal(id) {
-  return document.getElementById(id)?.value || "";
-}
-
-function updateStatus(id, isConfigured) {
-  const badge = document.getElementById(id);
-  if (!badge) return;
-  if (isConfigured) {
-    badge.className = "status-badge configured";
-    badge.textContent = "Configured";
-  } else {
-    badge.className = "status-badge missing";
-    badge.textContent = "Missing";
-  }
-}
 
 function showToast(msg, type = "info") {
   const container = document.getElementById("toasts");

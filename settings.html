@@ -338,70 +338,10 @@
     <h1 class="page-title">API Credentials</h1>
     <p class="page-subtitle">Configure your keys for each venue. Stored securely in your backend Upstash Redis.</p>
 
-    <!-- Simmer -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">SIMMER (Paper Trading)</div>
-        <div class="status-badge missing" id="status-simmer">Missing</div>
-      </div>
-      <div class="card-body">
-        <div class="control-group">
-          <label>Simmer API Key</label>
-          <input type="password" id="simmer_api_key" placeholder="sk_live_..." autocomplete="off">
-        </div>
-      </div>
-    </div>
-
-    <!-- Polymarket -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">POLYMARKET (Real USDC)</div>
-        <div class="status-badge missing" id="status-polymarket">Missing</div>
-      </div>
-      <div class="card-body">
-        <div class="control-group">
-          <label>Wallet Private Key (EVM)</label>
-          <input type="password" id="wallet_private_key" placeholder="0x..." autocomplete="off">
-        </div>
-        <div class="control-group">
-          <label>Signature Type</label>
-          <select id="polymarket_sig_type" style="background: var(--bg); border: 1px solid var(--border2); color: var(--text); padding: 10px 12px; border-radius: var(--radius); font-family: var(--mono); font-size: 0.85rem; outline: none;">
-            <option value="2">2 — GNOSIS_SAFE (MetaMask / Browser Wallets)</option>
-            <option value="0">0 — EOA (Direct wallet, pay gas in POL)</option>
-            <option value="1">1 — POLY_PROXY (Magic Link / Email Account)</option>
-          </select>
-          <p style="font-size: 0.7rem; color: var(--muted); margin-top: 4px;">Choose 2 if using MetaMask. Choose 1 if using an email login key.</p>
-        </div>
-        <div class="control-group">
-          <label>Polymarket CLOB API Key</label>
-          <input type="password" id="polymarket_api_key" placeholder="..." autocomplete="off">
-        </div>
-        <div class="control-group">
-          <label>Polymarket CLOB Secret</label>
-          <input type="password" id="polymarket_api_secret" placeholder="..." autocomplete="off">
-        </div>
-        <div class="control-group">
-          <label>Polymarket CLOB Passphrase</label>
-          <input type="password" id="polymarket_passphrase" placeholder="..." autocomplete="off">
-        </div>
-        <div class="control-group">
-          <label>Wallet Address (Public)</label>
-          <input type="text" id="polymarket_wallet_addr" placeholder="0x..." autocomplete="off">
-        </div>
-      </div>
-    </div>
-
-    <!-- Kalshi -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">KALSHI (Real USD via USDC on Solana)</div>
-        <div class="status-badge missing" id="status-kalshi">Missing</div>
-      </div>
-      <div class="card-body">
-        <div class="control-group">
-          <label>Solana Private Key (Base58)</label>
-          <input type="password" id="solana_private_key" placeholder="..." autocomplete="off">
-        </div>
+    <!-- Dynamic Settings Container -->
+    <div id="settings-container">
+      <div style="padding: 40px; text-align: center; color: var(--muted); font-family: var(--mono);">
+        INITIALIZING SECURE SESSION...
       </div>
     </div>
 

@@ -19,6 +19,7 @@ const api = (() => {
     trade: (body) => post("/api/trade", body),
     getConfig: () => get("/api/config"),
     updateConfig: (body) => post("/api/config", body),
+    getSettingsSchema: () => get("/api/settings/schema"),
     getCredentials: () => get("/api/credentials"),
     updateCredentials: (body) => post("/api/credentials", body),
   };
