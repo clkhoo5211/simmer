@@ -13,8 +13,9 @@ from pydantic import BaseModel
 from loguru import logger
 
 from core.client import get_client
-from core.risk import daily_spent, MAX_TRADE, MAX_DAILY, check_limits, stop_loss_triggered
+from core.risk import daily_spent, stop_loss_triggered, MAX_DAILY
 from core.store import load_config, save_config, load_credentials, save_credentials
+from core.settings_schema import SETTINGS_SCHEMA
 from strategies.arb_yesno   import run_arb_cycle, run_cross_platform_arb
 from strategies.market_maker import run_market_making
 from strategies.ai_prob      import run_ai_prob_cycle
@@ -321,35 +322,48 @@ def _mask(val: str | None) -> str | None:
     return "****" + val[-4:]
 
 
+@app.get("/api/settings/schema")
+def get_settings_schema():
+    """Return the centralized settings definition."""
+    return SETTINGS_SCHEMA
+
+
 @app.get("/api/credentials")
 def get_credentials():
-    """Return saved credentials with sensitive values masked."""
+    """Return saved credentials with sensitive values masked dynamically."""
     creds = load_credentials()
-    # Overlay env vars as defaults if Redis value not set
-    merged = {
-        "simmer_api_key":         creds.get("simmer_api_key")         or os.environ.get("SIMMER_API_KEY"),
-        "wallet_private_key":     creds.get("wallet_private_key")     or os.environ.get("WALLET_PRIVATE_KEY") or os.environ.get("SIMMER_PRIVATE_KEY"),
-        "polymarket_api_key":     creds.get("polymarket_api_key"),
-        "polymarket_api_secret":  creds.get("polymarket_api_secret"),
-        "polymarket_passphrase":  creds.get("polymarket_passphrase"),
-        "polymarket_wallet_addr": creds.get("polymarket_wallet_addr"),
-        "solana_private_key":     creds.get("solana_private_key")     or os.environ.get("SOLANA_PRIVATE_KEY"),
+    
+    response = {
+        "configured": {}
     }
-    # Mask all sensitive fields except wallet address
-    return {
-        "simmer_api_key":         _mask(merged["simmer_api_key"]),
-        "wallet_private_key":     _mask(merged["wallet_private_key"]),
-        "polymarket_api_key":     _mask(merged["polymarket_api_key"]),
-        "polymarket_api_secret":  _mask(merged["polymarket_api_secret"]),
-        "polymarket_passphrase":  _mask(merged["polymarket_passphrase"]),
-        "polymarket_wallet_addr": merged["polymarket_wallet_addr"],   # wallet addr is not secret
-        "solana_private_key":     _mask(merged["solana_private_key"]),
-        "configured": {
-            "simmer":     bool(merged["simmer_api_key"]),
-            "polymarket": bool(merged["wallet_private_key"]),
-            "kalshi":     bool(merged["solana_private_key"]),
-        }
-    }
+    
+    # Iterate through Categories
+    for category in SETTINGS_SCHEMA:
+        cat_id = category["id"]
+        any_field_set = False
+        
+        # Iterate through fields in this category
+        for field in category["fields"]:
+            fid = field["id"]
+            
+            # 1. Get value (Redis -> Env fallback)
+            val = creds.get(fid)
+            if not val and "env" in field:
+                val = os.environ.get(field["env"])
+                
+            # 2. Track if category is configured
+            if val:
+                any_field_set = True
+                
+            # 3. Mask if secret
+            if val and field.get("secret"):
+                response[fid] = _mask(val)
+            else:
+                response[fid] = val
+                
+        response["configured"][cat_id] = any_field_set
+        
+    return response
 
 
 @app.post("/api/credentials")
