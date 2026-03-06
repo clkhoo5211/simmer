@@ -11,7 +11,7 @@ const api = (() => {
 
   return {
     health: () => get("/api/health"),
-    portfolio: () => get("/api/portfolio"),
+    portfolio: (venue = "") => get(`/api/portfolio?venue=${venue}`),
     markets: (venue = "") => get(`/api/markets?venue=${venue}&limit=${CONFIG.MARKETS_LIMIT}`),
     positions: (venue = "") => get(`/api/positions?venue=${venue}`),
     trades: (venue = "") => get(`/api/trades?venue=${venue}`),

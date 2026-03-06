@@ -10,6 +10,7 @@ let state = {
   venue: "simmer",
   tradeLog: [],
   pollTimer: null,
+  isLoading: false,
 };
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
@@ -20,30 +21,43 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 async function loadAll() {
+  if (state.isLoading) return;
+  state.isLoading = true;
   setStatus("loading");
   try {
-    const [health, portfolio, markets, positions, trades, config] = await Promise.all([
+    // 1. Fetch config and health first to establish baseline
+    const [health, config] = await Promise.all([
       api.health(),
-      api.portfolio(),
+      api.getConfig(),
+    ]);
+
+    // 2. Only set venue from config if it's the very first load or specifically requested
+    if (!state.config || Object.keys(state.config).length === 0) {
+      state.venue = config.default_venue || "simmer";
+    }
+    state.config = config;
+
+    // 3. Fetch venue-specific data in parallel for speed
+    const [portfolio, markets, positions, trades] = await Promise.all([
+      api.portfolio(state.venue),
       api.markets(state.venue),
       api.positions(state.venue),
-      api.trades(state.venue),
-      api.getConfig(),
+      api.trades(state.venue)
     ]);
 
     state.portfolio = portfolio;
     state.markets = markets;
     state.positions = positions;
     state.tradeLog = trades;
-    state.config = config;
-    state.venue = config.default_venue || "simmer";
 
     renderAll();
     setStatus(health.stop_loss ? "halted" : "live");
   } catch (err) {
     setStatus("error");
     console.error(err);
-    showToast("⚠️ Cannot reach API — check your config.js URL", "error");
+    showToast("⚠️ API Sync Failed", "error");
+  } finally {
+    state.isLoading = false;
   }
 }
 
@@ -143,6 +157,12 @@ function renderConfig() {
   setChecked("toggle-corr", c.strategy_correlation);
 
   setVal("cfg-venue", c.default_venue || "simmer");
+  // Don't force venue-select to change here if user is mid-interaction
+  const venueSelect = document.getElementById("venue-select");
+  if (venueSelect && venueSelect.value !== state.venue) {
+    venueSelect.value = state.venue;
+  }
+
   setVal("cfg-max-trade", c.max_trade_usd || 25);
   setVal("cfg-max-daily", c.max_daily_usd || 200);
   setVal("cfg-min-edge", (c.min_arb_edge * 100).toFixed(1) || 1.5);
@@ -222,12 +242,15 @@ async function saveConfig() {
     strategy_correlation: getChecked("toggle-corr"),
   };
 
+  showToast("Saving configuration...", "info");
   try {
     const updated = await api.updateConfig(body);
     state.config = updated;
-    state.venue = updated.default_venue;
+    // We DON'T force state.venue = updated.default_venue here 
+    // to allow user to keep viewing their current venue.
     renderConfig();
     showToast("⚙️ Config saved", "success");
+    // Only reload venue data, don't reset everything
     await loadAll();
   } catch (err) {
     showToast("Config save failed", "error");
@@ -275,9 +298,21 @@ function bindEvents() {
   document.getElementById("refresh-btn")?.addEventListener("click", loadAll);
 
   document.getElementById("venue-select")?.addEventListener("change", async (e) => {
-    state.venue = e.target.value;
-    await api.updateConfig({ default_venue: state.venue });
-    await loadAll();
+    const newVenue = e.target.value;
+    if (state.venue === newVenue) return;
+
+    state.venue = newVenue;
+    renderHeader(); // Optimistic update
+    showToast(`Switching venue to ${newVenue.toUpperCase()}...`, "info");
+
+    try {
+      // Potentially update backend default too if desired, but keep local state primary
+      await api.updateConfig({ default_venue: state.venue });
+      await loadAll();
+    } catch (err) {
+      console.warn("Failed to persist default venue change:", err);
+      await loadAll(); // Still load data for the selected venue
+    }
   });
 }
 
