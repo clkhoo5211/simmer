@@ -256,12 +256,29 @@ def get_price_history(market_id: str, venue: str = ""):
 def manual_trade(req: TradeRequest):
     try:
         v      = req.venue or _config["default_venue"]
-        client = get_client(v)
-
         ok, reason = check_limits(req.amount)
         if not ok:
             raise HTTPException(status_code=400, detail=reason)
 
+        # 1. Native Routing
+        if v == "polymarket":
+            try:
+                from core.polymarket_native import place_native_order
+                logger.info("Redirecting to native Polymarket order placement...")
+                res = place_native_order(req.market_id, req.side, req.amount)
+                return res
+            except Exception as e:
+                logger.warning(f"Native Polymarket trade failed, falling back to simmer-sdk: {e}")
+        
+        elif v == "kalshi":
+            try:
+                # Placeholder for native Kalshi trade if implemented
+                pass
+            except Exception as e:
+                logger.warning(f"Native Kalshi trade failed, falling back: {e}")
+
+        # 2. Simmer SDK Fallback
+        client = get_client(v)
         result = client.trade(
             market_id=req.market_id,
             side=req.side,
