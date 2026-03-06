@@ -14,6 +14,46 @@ from core.store import load_credentials
 
 _clients: dict[str, SimmerClient] = {}
 
+class NativePolymarketClient:
+    """
+    Wrapper for SimmerClient that intercepts trades and uses the native CLOB client.
+    This ensures that even automated strategies use the native Polymarket integration.
+    """
+    def __init__(self, sdk_client):
+        self._sdk = sdk_client
+        
+    def __getattr__(self, name):
+        # Proxy all other calls (get_markets, etc) to the SDK client
+        return getattr(self._sdk, name)
+        
+    def trade(self, market_id: str, side: str, amount: float, **kwargs):
+        from core.polymarket_native import place_native_order
+        from loguru import logger
+        
+        logger.info(f"Native automation trade: {side} {amount} on {market_id}")
+        res = place_native_order(market_id, side, amount)
+        
+        # Convert native response to a format compatible with strategies
+        from dataclasses import dataclass
+        @dataclass
+        class SimpleResult:
+            success: bool
+            trade_id: str
+            market_id: str
+            side: str
+            shares_bought: float
+            cost: float
+            new_balance: float = 0.0
+            
+        return SimpleResult(
+            success=res.get("success", False),
+            trade_id=res.get("trade_id", ""),
+            market_id=res.get("market_id", ""),
+            side=res.get("side", ""),
+            shares_bought=res.get("shares_bought", 0.0),
+            cost=res.get("cost", 0.0)
+        )
+
 def get_client(venue: str | None = None) -> SimmerClient:
     venue = venue or os.environ.get("DEFAULT_VENUE", "simmer")
     
@@ -44,6 +84,12 @@ def get_client(venue: str | None = None) -> SimmerClient:
         if venue == "polymarket" and pk:
             kwargs["private_key"] = pk
             
-        _clients[venue] = SimmerClient(**kwargs)
+        sdk_client = SimmerClient(**kwargs)
+        
+        # If venue is polymarket, wrap the client to use our native trade logic
+        if venue == "polymarket":
+            _clients[venue] = NativePolymarketClient(sdk_client)
+        else:
+            _clients[venue] = sdk_client
         
     return _clients[venue]
