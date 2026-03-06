@@ -19,6 +19,7 @@ async function loadCredentials() {
     if (creds.polymarket_api_secret) setPlaceholder("polymarket_api_secret", creds.polymarket_api_secret);
     if (creds.polymarket_passphrase) setPlaceholder("polymarket_passphrase", creds.polymarket_passphrase);
     if (creds.polymarket_wallet_addr) setVal("polymarket_wallet_addr", creds.polymarket_wallet_addr);
+    if (creds.polymarket_sig_type) setVal("polymarket_sig_type", creds.polymarket_sig_type);
     if (creds.solana_private_key) setPlaceholder("solana_private_key", creds.solana_private_key);
 
     // Update status badges
@@ -42,7 +43,8 @@ async function saveCredentials() {
   const body = {};
   const fields = [
     "simmer_api_key", "wallet_private_key", "polymarket_api_key",
-    "polymarket_api_secret", "polymarket_passphrase", "polymarket_wallet_addr", "solana_private_key"
+    "polymarket_api_secret", "polymarket_passphrase", "polymarket_wallet_addr",
+    "polymarket_sig_type", "solana_private_key"
   ];
 
   for (const f of fields) {

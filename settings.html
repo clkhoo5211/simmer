@@ -364,6 +364,15 @@
           <input type="password" id="wallet_private_key" placeholder="0x..." autocomplete="off">
         </div>
         <div class="control-group">
+          <label>Signature Type</label>
+          <select id="polymarket_sig_type" style="background: var(--bg); border: 1px solid var(--border2); color: var(--text); padding: 10px 12px; border-radius: var(--radius); font-family: var(--mono); font-size: 0.85rem; outline: none;">
+            <option value="2">2 — GNOSIS_SAFE (MetaMask / Browser Wallets)</option>
+            <option value="0">0 — EOA (Direct wallet, pay gas in POL)</option>
+            <option value="1">1 — POLY_PROXY (Magic Link / Email Account)</option>
+          </select>
+          <p style="font-size: 0.7rem; color: var(--muted); margin-top: 4px;">Choose 2 if using MetaMask. Choose 1 if using an email login key.</p>
+        </div>
+        <div class="control-group">
           <label>Polymarket CLOB API Key</label>
           <input type="password" id="polymarket_api_key" placeholder="..." autocomplete="off">
         </div>
