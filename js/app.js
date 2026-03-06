@@ -22,17 +22,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function loadAll() {
   setStatus("loading");
   try {
-    const [health, portfolio, markets, positions, config] = await Promise.all([
+    const [health, portfolio, markets, positions, trades, config] = await Promise.all([
       api.health(),
       api.portfolio(),
       api.markets(state.venue),
       api.positions(state.venue),
+      api.trades(state.venue),
       api.getConfig(),
     ]);
 
     state.portfolio = portfolio;
     state.markets = markets;
     state.positions = positions;
+    state.tradeLog = trades;
     state.config = config;
     state.venue = config.default_venue || "simmer";
 
@@ -56,6 +58,7 @@ function renderAll() {
   renderPortfolio();
   renderMarkets();
   renderPositions();
+  renderTradeLog();
   renderConfig();
 }
 
@@ -160,7 +163,7 @@ async function quickTrade(marketId, side) {
       reasoning: reason,
       venue: state.venue,
     });
-    logTrade(marketId, side, amount, result);
+    // Removed logTrade() - history is now fetched from backend in loadAll()
     showToast(`✅ ${side.toUpperCase()} ${result.shares_bought?.toFixed(3)} shares @ $${result.cost?.toFixed(2)}`, "success");
     await loadAll();
   } catch (err) {
@@ -247,23 +250,17 @@ async function toggleAutomation() {
 }
 
 // ── Log ───────────────────────────────────────────────────────────────────────
-function logTrade(marketId, side, amount, result) {
-  state.tradeLog.unshift({
-    time: new Date().toLocaleTimeString(),
-    market: marketId.slice(0, 10) + "…",
-    side,
-    amount,
-    shares: result.shares_bought,
-    cost: result.cost,
-  });
-  state.tradeLog = state.tradeLog.slice(0, 30);   // Keep last 30
-
+function renderTradeLog() {
   const tbody = document.getElementById("log-body");
   if (!tbody) return;
+  if (!state.tradeLog || !state.tradeLog.length) {
+    tbody.innerHTML = `<tr><td colspan="5" class="empty">No trades this session</td></tr>`;
+    return;
+  }
   tbody.innerHTML = state.tradeLog.map(t => `
     <tr>
       <td class="mono">${t.time}</td>
-      <td class="mono">${t.market}</td>
+      <td class="mono">${(t.market_id || "???").slice(0, 10)}…</td>
       <td class="${t.side === 'yes' ? 'pos' : 'neg'}">${t.side.toUpperCase()}</td>
       <td>${fmt$(t.amount)}</td>
       <td class="mono">${(t.shares || 0).toFixed(3)}</td>

@@ -14,6 +14,7 @@ const api = (() => {
     portfolio: () => get("/api/portfolio"),
     markets: (venue = "") => get(`/api/markets?venue=${venue}&limit=${CONFIG.MARKETS_LIMIT}`),
     positions: (venue = "") => get(`/api/positions?venue=${venue}`),
+    trades: (venue = "") => get(`/api/trades?venue=${venue}`),
     arbScan: (venue = "") => get(`/api/arb/scan?venue=${venue}`),
     priceHistory: (id, venue) => get(`/api/markets/${id}/history?venue=${venue}`),
     trade: (body) => post("/api/trade", body),
