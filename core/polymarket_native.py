@@ -19,7 +19,7 @@ def get_native_clob_client() -> ClobClient:
             host="https://clob.polymarket.com",
             key=pkey,
             chain_id=137,
-            signature_type=2,
+            signature_type=int(creds.get("polymarket_sig_type", 2)),
             creds={
                 "key": creds.get("polymarket_api_key", ""),
                 "secret": creds.get("polymarket_api_secret", ""),
