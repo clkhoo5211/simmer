@@ -30,8 +30,8 @@ CRON_SECRET      = os.environ.get("CRON_SECRET", "")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[DASHBOARD_ORIGIN, "http://localhost:5500", "http://127.0.0.1:5500"],
-    allow_methods=["GET", "POST"],
+    allow_origins=["*"],  # Allow all origins for the dashboard (security handled via masking)
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -78,13 +78,9 @@ class ConfigUpdate(BaseModel):
 
 
 class CredentialsUpdate(BaseModel):
-    simmer_api_key:          str | None = None  # Simmer SDK key (sk_live_...)
-    wallet_private_key:      str | None = None  # Polymarket EVM key (0x...)
-    polymarket_api_key:      str | None = None  # Polymarket CLOB API key
-    polymarket_api_secret:   str | None = None  # Polymarket CLOB secret
-    polymarket_passphrase:   str | None = None  # Polymarket CLOB passphrase
-    polymarket_wallet_addr:  str | None = None  # Polymarket wallet address
-    solana_private_key:      str | None = None  # Kalshi via Solana (base58)
+    # Allow any fields from the dynamic schema
+    class Config:
+        extra = "allow"
 
 
 # Runtime config — loaded from Redis on cold start, falls back to defaults
