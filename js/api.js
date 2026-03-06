@@ -29,5 +29,6 @@ const api = (() => {
     getSettingsSchema: () => get("/api/settings/schema"),
     getCredentials: () => get("/api/credentials"),
     updateCredentials: (body) => post("/api/credentials", body),
+    resetConfig: () => fetch(`${base()}/api/config`, { method: 'DELETE' }).then(r => r.json()),
   };
 })();

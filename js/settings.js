@@ -7,6 +7,7 @@ let currentSchema = [];
 document.addEventListener("DOMContentLoaded", async () => {
   await initSettings();
   document.getElementById("save-btn")?.addEventListener("click", saveCredentials);
+  document.getElementById("reset-btn")?.addEventListener("click", resetConfigSettings);
 });
 
 async function initSettings() {
@@ -132,6 +133,30 @@ async function saveCredentials() {
     if (btn) {
       btn.disabled = false;
       btn.textContent = "SAVE CREDENTIALS";
+    }
+  }
+}
+
+async function resetConfigSettings() {
+  if (!confirm("Are you sure you want to reset all settings to defaults? This will clear your Redis configuration.")) return;
+
+  const btn = document.getElementById("reset-btn");
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "RESETTING...";
+  }
+
+  try {
+    await api.resetConfig();
+    showToast("✅ Settings reset successfully", "success");
+    // Reload to clear inputs
+    setTimeout(() => window.location.href = "index.html", 1500);
+  } catch (err) {
+    console.error(err);
+    showToast("❌ Failed to reset settings", "error");
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "RESET SETTINGS";
     }
   }
 }
