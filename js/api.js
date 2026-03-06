@@ -1,13 +1,19 @@
 // js/api.js  —  thin wrapper around all Vercel backend endpoints
 const api = (() => {
   const base = () => CONFIG.API_BASE;
-  const get = (path) => fetch(`${base()}${path}`).then(r => r.json());
+  const get = (path) => fetch(`${base()}${path}`).then(r => {
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return r.json();
+  });
   const post = (path, body) =>
     fetch(`${base()}${path}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
-    }).then(r => r.json());
+    }).then(r => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    });
 
   return {
     health: () => get("/api/health"),

@@ -38,17 +38,29 @@ async function loadAll() {
     state.config = config;
 
     // 3. Fetch venue-specific data in parallel for speed
-    const [portfolio, markets, positions, trades] = await Promise.all([
-      api.portfolio(state.venue),
-      api.markets(state.venue),
-      api.positions(state.venue),
-      api.trades(state.venue)
+    const [p, m, pos, t] = await Promise.all([
+      api.portfolio(state.venue).catch(e => ({ error: e.message })),
+      api.markets(state.venue).catch(e => ({ error: e.message })),
+      api.positions(state.venue).catch(e => ({ error: e.message })),
+      api.trades(state.venue).catch(e => ({ error: e.message }))
     ]);
 
-    state.portfolio = portfolio;
-    state.markets = markets;
-    state.positions = positions;
-    state.tradeLog = trades;
+    // Guarded updates: Only overwrite if response is valid (not an error object)
+    if (p && !p.error) state.portfolio = p;
+    if (Array.isArray(m)) state.markets = m;
+
+    // Handle both direct arrays and wrapped error objects from backend
+    if (Array.isArray(pos)) {
+      state.positions = pos;
+    } else if (pos && Array.isArray(pos.positions) && !pos.error) {
+      state.positions = pos.positions;
+    }
+
+    if (Array.isArray(t)) {
+      state.tradeLog = t;
+    } else if (t && Array.isArray(t.trades) && !t.error) {
+      state.tradeLog = t.trades;
+    }
 
     renderAll();
     setStatus(health.stop_loss ? "halted" : "live");
