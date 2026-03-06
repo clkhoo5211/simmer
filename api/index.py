@@ -21,6 +21,7 @@ from strategies.market_maker import run_market_making
 from strategies.ai_prob      import run_ai_prob_cycle
 from strategies.correlation  import run_correlation_cycle
 from strategies.clawhub_weather import run_weather_strategy
+from core.telegram import send_telegram_message
 
 # ── App setup ─────────────────────────────────────────────────────────────────
 app = FastAPI(title="Simmer Trading Bot API", version="1.0.0")
@@ -414,7 +415,10 @@ def cron_arb():
     if skip: return skip
     if not _config.get("strategy_arb"):
         return {"skipped": "strategy disabled"}
-    return {"results": run_arb_cycle(_config["default_venue"])}
+    results = run_arb_cycle(_config["default_venue"])
+    if results:
+        send_telegram_message(f"💰 <b>Arb Cycle Complete</b> ({_config['default_venue']})\nResults: {len(results)} opportunities executed.")
+    return {"results": results}
 
 
 @app.get("/cron/correlation", dependencies=[Depends(verify_cron)])
@@ -423,7 +427,10 @@ def cron_correlation():
     if skip: return skip
     if not _config.get("strategy_correlation"):
         return {"skipped": "strategy disabled"}
-    return {"results": run_correlation_cycle(_config["default_venue"])}
+    results = run_correlation_cycle(_config["default_venue"])
+    if results:
+        send_telegram_message(f"📊 <b>Correlation Cycle Complete</b> ({_config['default_venue']})\nMatched: {len(results)} pairs.")
+    return {"results": results}
 
 
 @app.get("/cron/ai-prob", dependencies=[Depends(verify_cron)])
@@ -432,7 +439,10 @@ def cron_ai_prob():
     if skip: return skip
     if not _config.get("strategy_ai"):
         return {"skipped": "strategy disabled"}
-    return {"results": run_ai_prob_cycle(_config["default_venue"])}
+    results = run_ai_prob_cycle(_config["default_venue"])
+    if results:
+        send_telegram_message(f"🧠 <b>AI Probability Cycle Complete</b> ({_config['default_venue']})")
+    return {"results": results}
 
 
 @app.get("/cron/market-making", dependencies=[Depends(verify_cron)])
@@ -444,7 +454,10 @@ def cron_market_making():
     client = get_client(_config["default_venue"])
     mkts   = client.get_markets(status="active", limit=20)
     ids    = [m.id for m in mkts]
-    return {"results": run_market_making(ids, _config["default_venue"])}
+    results = run_market_making(ids, _config["default_venue"])
+    if results:
+        send_telegram_message(f"⚖️ <b>Market Making Complete</b> ({_config['default_venue']})\nMarkets: {len(ids)}")
+    return {"results": results}
 
 
 @app.get("/cron/weather", dependencies=[Depends(verify_cron)])

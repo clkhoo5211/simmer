@@ -94,5 +94,26 @@ SETTINGS_SCHEMA = [
                 "secret": True
             }
         ]
+    },
+    {
+        "id": "telegram",
+        "title": "TELEGRAM NOTIFICATIONS",
+        "fields": [
+            {
+                "id": "telegram_bot_token",
+                "label": "Bot Token",
+                "type": "password",
+                "placeholder": "123456:ABC-DEF...",
+                "env": "TELEGRAM_BOT_TOKEN",
+                "secret": True
+            },
+            {
+                "id": "telegram_chat_id",
+                "label": "Chat ID",
+                "type": "text",
+                "placeholder": "-123456789",
+                "env": "TELEGRAM_CHAT_ID"
+            }
+        ]
     }
 ]
