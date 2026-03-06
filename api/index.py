@@ -119,9 +119,28 @@ def health():
 
 # ── Portfolio ─────────────────────────────────────────────────────────────────
 @app.get("/api/portfolio")
-def get_portfolio():
+def get_portfolio(venue: str = ""):
+    v = venue or _config["default_venue"]
+    
+    if v == "polymarket":
+        try:
+            from core.polymarket_native import get_native_portfolio
+            logger.info("Attempting native Polymarket API calculation...")
+            return get_native_portfolio()
+        except Exception as e:
+            logger.warning(f"Native Polymarket failed, falling back to simmer-sdk: {e}")
+            
+    elif v == "kalshi":
+        try:
+            from core.kalshi_native import get_native_portfolio as kalshi_native_portfolio
+            logger.info("Attempting native Kalshi API calculation...")
+            return kalshi_native_portfolio()
+        except Exception as e:
+            logger.warning(f"Native Kalshi failed, falling back to simmer-sdk: {e}")
+
+    # --- Simmer SDK Fallback / Default for 'simmer' venue ---
     try:
-        client    = get_client(_config["default_venue"])
+        client    = get_client(v)
         portfolio = client.get_portfolio()
         total_pnl = client.get_total_pnl()
         return {
@@ -131,6 +150,8 @@ def get_portfolio():
             "daily_spent":    round(daily_spent(), 2),
             "daily_limit":    MAX_DAILY,
             "by_source":      portfolio.get("by_source", {}),
+            "positions":      [], # Populated if frontend supports generic
+            "source":         "simmer-sdk"
         }
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
@@ -145,7 +166,25 @@ def get_markets(
     limit:         int = 25,
 ):
     try:
-        v      = venue or _config["default_venue"]
+        v = venue or _config["default_venue"]
+        
+        if v == "polymarket":
+            try:
+                from core.polymarket_native import get_native_markets
+                logger.info("Attempting native Polymarket get_markets...")
+                return get_native_markets(status=status, limit=limit)
+            except Exception as e:
+                logger.warning(f"Native Polymarket get_markets failed, falling back: {e}")
+                
+        elif v == "kalshi":
+            try:
+                from core.kalshi_native import get_native_markets as kalshi_native_markets
+                logger.info("Attempting native Kalshi get_markets...")
+                return kalshi_native_markets(status=status, limit=limit)
+            except Exception as e:
+                logger.warning(f"Native Kalshi get_markets failed, falling back: {e}")
+
+        # --- Simmer SDK Fallback ---
         client = get_client(v)
         mkts   = client.get_markets(status=status, import_source=import_source, limit=limit)
         return [
@@ -168,7 +207,25 @@ def get_markets(
 @app.get("/api/positions")
 def get_positions(venue: str = ""):
     try:
-        v         = venue or _config["default_venue"]
+        v = venue or _config["default_venue"]
+
+        if v == "polymarket":
+            try:
+                from core.polymarket_native import get_native_positions
+                logger.info("Attempting native Polymarket get_positions...")
+                return get_native_positions()
+            except Exception as e:
+                logger.warning(f"Native Polymarket get_positions failed, falling back: {e}")
+                
+        elif v == "kalshi":
+            try:
+                from core.kalshi_native import get_native_positions as kalshi_native_positions
+                logger.info("Attempting native Kalshi get_positions...")
+                return kalshi_native_positions()
+            except Exception as e:
+                logger.warning(f"Native Kalshi get_positions failed, falling back: {e}")
+
+        # --- Simmer SDK Fallback ---
         client    = get_client(v)
         positions = client.get_positions()
         return [

@@ -8,5 +8,6 @@ openai>=1.30.0
 anthropic>=0.25.0
 python-dotenv>=1.0.0
 requests>=2.31.0
-loguru>=0.7.0
 pydantic>=2.7.0
+loguru>=0.7.2
+kalshi-python>=2.0.00
