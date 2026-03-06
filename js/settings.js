@@ -137,14 +137,29 @@ async function saveCredentials() {
   }
 }
 
-async function resetConfigSettings() {
-  if (!confirm("Are you sure you want to reset all settings to defaults? This will clear your Redis configuration.")) return;
+let resetConfirmTimer = null;
 
+async function resetConfigSettings(e) {
   const btn = document.getElementById("reset-btn");
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = "RESETTING...";
+  if (!btn) return;
+
+  if (btn.textContent !== "CLICK AGAIN TO CONFIRM") {
+    btn.textContent = "CLICK AGAIN TO CONFIRM";
+    btn.style.background = "var(--danger)";
+    btn.style.color = "var(--bg)";
+
+    clearTimeout(resetConfirmTimer);
+    resetConfirmTimer = setTimeout(() => {
+      btn.textContent = "RESET SETTINGS";
+      btn.style.background = "rgba(244, 63, 94, 0.1)";
+      btn.style.color = "var(--danger)";
+    }, 3000);
+    return;
   }
+
+  clearTimeout(resetConfirmTimer);
+  btn.disabled = true;
+  btn.textContent = "RESETTING...";
 
   try {
     await api.resetConfig();
