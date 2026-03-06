@@ -16,6 +16,8 @@ def get_native_clob_client() -> ClobClient:
         if not pkey:
             raise ValueError("Missing WALLET_PRIVATE_KEY for Polymarket native client")
 
+        funder = creds_data.get("polymarket_funder_addr")
+
         # Must use ApiCreds object for Level 2 Auth
         api_creds = ApiCreds(
             api_key=creds_data.get("polymarket_api_key", ""),
@@ -28,6 +30,7 @@ def get_native_clob_client() -> ClobClient:
             key=pkey,
             chain_id=137,
             signature_type=int(creds_data.get("polymarket_sig_type", 2)),
+            funder=funder,
             creds=api_creds
         )
     return _clob_client
@@ -150,18 +153,38 @@ def place_native_order(market_id: str, side: str, amount: float) -> dict:
     try:
         from py_clob_client.clob_types import OrderArgs
         
-        # For verification, we try to place a buy order on the specified token_id
-        logger.info(f"Attempting real Polymarket CLOB order: {side} {amount} on {market_id}")
+        # 1. Resolve condition ID to token ID if necessary
+        # Simmer uses condition IDs. CLOB uses token IDs.
+        token_id = market_id
+        if market_id.startswith("0x"):
+            logger.info(f"Resolving condition ID {market_id} to token ID...")
+            try:
+                # Gamma API can help us get the market details
+                resp = requests.get(f"https://gamma-api.polymarket.com/markets/{market_id}", timeout=5)
+                if resp.ok:
+                    m_data = resp.json()
+                    # Simmer: 'yes' -> Token 0, 'no' -> Token 1 (usually)
+                    clob_tokens = m_data.get("clobTokenIds")
+                    if clob_tokens:
+                        # Map yes/no to the correct token
+                        token_id = clob_tokens[0] if side.lower() == "yes" else clob_tokens[1]
+                        logger.info(f"Resolved to token ID: {token_id}")
+            except Exception as e:
+                logger.warning(f"Failed to resolve token ID via Gamma: {e}")
+
+        logger.info(f"Attempting native Polymarket CLOB order: {side} {amount} on {token_id}")
         
-        # At $0.01 price, $5 buys 500 shares
-        price = 0.01
+        # Determine price (use a default or fetch mid)
+        # For a manual trade, we might want to fetch the orderbook first
+        # But for this verification tool, we'll try a price that's likely to trigger balance checks
+        price = 0.50 # Default to 0.50 for testing
         size = amount / price
         
         order_args = OrderArgs(
-            token_id=market_id,
+            token_id=token_id,
             price=price,
             size=size,
-            side="BUY"
+            side="BUY" # Simmer manual trade is always a BUY of the outcome
         )
         
         order = client.create_order(order_args)
