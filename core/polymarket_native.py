@@ -9,7 +9,6 @@ _clob_client = None
 def get_native_clob_client() -> ClobClient:
     global _clob_client
     if _clob_client is None:
-        from py_clob_client.clob_types import ApiCreds
         creds_data = load_credentials()
         
         pkey = creds_data.get("wallet_private_key") or os.environ.get("WALLET_PRIVATE_KEY") or os.environ.get("SIMMER_PRIVATE_KEY")
@@ -17,22 +16,38 @@ def get_native_clob_client() -> ClobClient:
             raise ValueError("Missing WALLET_PRIVATE_KEY for Polymarket native client")
 
         funder = creds_data.get("polymarket_funder_addr")
+        sig_type = int(creds_data.get("polymarket_sig_type", 2))
 
-        # Must use ApiCreds object for Level 2 Auth
-        api_creds = ApiCreds(
-            api_key=creds_data.get("polymarket_api_key", ""),
-            api_secret=creds_data.get("polymarket_api_secret", ""),
-            api_passphrase=creds_data.get("polymarket_passphrase", "")
-        )
-
+        # We initialize the client without credentials first
+        # Then use create_or_derive_api_creds to get the linked set from Polymarket.
+        # This resolves 401 Unauthorized issues seen with manual API Key entry.
         _clob_client = ClobClient(
             host="https://clob.polymarket.com",
             key=pkey,
             chain_id=137,
-            signature_type=int(creds_data.get("polymarket_sig_type", 2)),
-            funder=funder,
-            creds=api_creds
+            signature_type=sig_type,
+            funder=funder
         )
+        
+        try:
+            logger.info("Auto-deriving Polymarket API credentials...")
+            _clob_client.set_api_creds(_clob_client.create_or_derive_api_creds())
+            logger.info("Polymarket credentials linked successfully")
+        except Exception as e:
+            logger.error(f"Failed to derive Polymarket credentials: {e}")
+            # If derivation fails, we try to fall back to provided creds if they exist
+            if creds_data.get("polymarket_api_key"):
+                from py_clob_client.clob_types import ApiCreds
+                api_creds = ApiCreds(
+                    api_key=creds_data.get("polymarket_api_key", ""),
+                    api_secret=creds_data.get("polymarket_api_secret", ""),
+                    api_passphrase=creds_data.get("polymarket_passphrase", "")
+                )
+                _clob_client.set_api_creds(api_creds)
+                logger.info("Falling back to manual API credentials")
+            else:
+                raise ValueError(f"Could not authenticate with Polymarket: {e}")
+                
     return _clob_client
 
 def get_native_portfolio() -> dict:
