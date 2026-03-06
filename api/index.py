@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from loguru import logger
 
 from core.client import get_client
-from core.risk import daily_spent, stop_loss_triggered, MAX_DAILY
+from core.risk import daily_spent, stop_loss_triggered, MAX_DAILY, MAX_TRADE, check_limits
 from core.store import load_config, save_config, load_credentials, save_credentials
 from core.settings_schema import SETTINGS_SCHEMA
 from strategies.arb_yesno   import run_arb_cycle, run_cross_platform_arb
