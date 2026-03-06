@@ -30,5 +30,6 @@ const api = (() => {
     getCredentials: () => get("/api/credentials"),
     updateCredentials: (body) => post("/api/credentials", body),
     resetConfig: () => fetch(`${base()}/api/config`, { method: 'DELETE' }).then(r => r.json()),
+    triggerCron: (strategy) => get(`/cron/${strategy}`),
   };
 })();

@@ -284,6 +284,37 @@ async function toggleAutomation() {
   }
 }
 
+// ── Manual Strategy Triggers ──────────────────────────────────────────────────
+async function triggerCron(strategy) {
+  const btnId = strategy === 'arb' ? 'btn-run-arb' : 'btn-run-mm';
+  const btn = document.getElementById(btnId);
+  const originalText = btn ? btn.textContent : 'RUN';
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'RUNNING...';
+  }
+
+  showToast(`Running ${strategy.toUpperCase()} strategy...`, "info");
+
+  try {
+    const result = await api.triggerCron(strategy);
+    if (result.skipped) {
+      showToast(`Skipped: ${result.skipped}`, "warning");
+    } else {
+      showToast(`✅ ${strategy.toUpperCase()} execution complete`, "success");
+      await loadAll();
+    }
+  } catch (err) {
+    showToast(`❌ Strategy execution failed: ${err.message}`, "error");
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  }
+}
+
 // ── Log ───────────────────────────────────────────────────────────────────────
 function renderTradeLog() {
   const tbody = document.getElementById("log-body");
