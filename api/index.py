@@ -30,8 +30,8 @@ CRON_SECRET      = os.environ.get("CRON_SECRET", "")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[DASHBOARD_ORIGIN, "https://clkhoo5211.github.io"],
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_origins=[DASHBOARD_ORIGIN, "http://localhost:5500", "http://127.0.0.1:5500"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
