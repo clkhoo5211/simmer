@@ -1,6 +1,6 @@
 import os
 import requests
-from pyclob.client import ClobClient
+from py_clob_client.client import ClobClient
 from core.store import load_credentials
 from loguru import logger
 
@@ -150,8 +150,7 @@ def place_native_order(market_id: str, side: str, amount: float) -> dict:
     # For simplicity, we assume the market_id passed is the token ID / condition ID.
     
     try:
-        from pyclob.constants import BUY
-        from pyclob.utils import get_order_builder
+        from py_clob_client.constants import BUY
         
         # This is a placeholder for actual order placement logic which varies by market type
         # In a real scenario, we'd fetch the token IDs for the market first.
