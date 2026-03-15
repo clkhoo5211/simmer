@@ -5,9 +5,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Security Headers: GitHub Pages doesn't allow custom HTTP headers, so we enforce CSP via meta tag -->
+  <!-- Security: CSP allows backend. For local dev, open via http://localhost:8080 (not file://) and hard-refresh if you see OFFLINE. -->
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://simmer-backend.vercel.app; img-src 'self' data:;" />
+    content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://simmer-backend.vercel.app http://localhost:8000 http://127.0.0.1:8000; img-src 'self' data:;" />
 
   <title>Simmer Bot — Control Terminal</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -377,7 +377,12 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 12px;
+      margin-bottom: 6px;
+    }
+    .section-note {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin: 0 0 10px 0;
     }
 
     .section-title {
@@ -407,6 +412,39 @@
     }
 
     .section-action:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+    }
+
+    /* Trade log pagination (matches section-action / btn-icon styling) */
+    .log-pagination {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .log-pagination .log-page-info {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+    .log-pagination .log-pagination-btn {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      cursor: pointer;
+      color: var(--muted);
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      padding: 5px 12px;
+      border-radius: var(--radius);
+      transition: color .15s, border-color .15s, opacity .15s;
+    }
+    .log-pagination .log-pagination-btn:hover:not(:disabled) {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+    .log-pagination .log-pagination-btn:disabled {
       opacity: .4;
       cursor: not-allowed;
     }
@@ -457,6 +495,14 @@
 
     .q-cell {
       max-width: 320px;
+    }
+    .condition-id-cell {
+      font-family: ui-monospace, monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+      max-width: 140px;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .mono {
@@ -510,6 +556,66 @@
     .trade-btns {
       display: flex;
       gap: 6px;
+      align-items: center;
+    }
+    .link-view {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-left: 4px;
+    }
+    .link-view:hover {
+      color: #7c9cff;
+    }
+
+    .tag-filter-chip {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-left: 8px;
+    }
+    .tag-filter-chip .tag-filter-clear {
+      margin-left: 4px;
+      padding: 0 4px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: var(--muted);
+    }
+    .tag-filter-chip .tag-filter-clear:hover {
+      color: var(--text);
+    }
+    .tag-cell {
+      max-width: 160px;
+    }
+    .log-title-cell {
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 0.8rem;
+    }
+    .tag-slug-btn {
+      display: inline-block;
+      margin: 2px 4px 2px 0;
+      padding: 2px 6px;
+      font-size: 0.7rem;
+      font-family: var(--mono);
+      color: var(--muted);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .tag-slug-btn:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+    .link-button {
+      background: none;
+      border: none;
+      color: var(--accent);
+      cursor: pointer;
+      font-size: inherit;
+      text-decoration: underline;
     }
 
     .btn-yes,
@@ -563,6 +669,16 @@
       background: rgba(74, 96, 128, 0.2);
       color: var(--muted);
       border: 1px solid var(--border2);
+    }
+
+    .badge-sports {
+      font-size: 0.6rem;
+      margin-left: 6px;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: rgba(245, 166, 35, 0.2);
+      color: #f5a623;
+      border: 1px solid rgba(245, 166, 35, 0.4);
     }
 
     /* ── Arb scanner ─────────────────────────────────────────────────────── */
@@ -623,6 +739,10 @@
       letter-spacing: 0.1em;
       color: var(--muted);
       margin-bottom: 4px;
+    }
+
+    .sidebar-config .config-grid-sidebar {
+      grid-template-columns: 1fr;
     }
 
     .btn-save {
@@ -804,9 +924,9 @@
       <div>
         <div class="panel-label">Active Venue</div>
         <select id="venue-select">
+          <option value="polymarket_paper">POLYMARKET (Paper)</option>
           <option value="simmer">SIMMER (Paper)</option>
-          <option value="polymarket">POLYMARKET</option>
-          <option value="kalshi">KALSHI</option>
+          <option value="polymarket">POLYMARKET (Live)</option>
         </select>
       </div>
 
@@ -872,8 +992,36 @@
         </div>
       </div>
 
-      <!-- Quick trade -->
-      <div>
+      <!-- Bot Configuration (migrated from main content) -->
+      <div class="sidebar-config">
+        <div class="panel-label">Bot Configuration</div>
+        <div class="config-grid config-grid-sidebar">
+          <div class="config-field">
+            <label>Max per trade ($)</label>
+            <input class="input-field" id="cfg-max-trade" type="number" min="1" max="100" />
+          </div>
+          <div class="config-field">
+            <label>Max daily ($)</label>
+            <input class="input-field" id="cfg-max-daily" type="number" min="10" max="500" />
+          </div>
+          <div class="config-field">
+            <label>Min arb edge (%)</label>
+            <input class="input-field" id="cfg-min-edge" type="number" step="0.1" min="0.5" max="10" />
+          </div>
+          <div class="config-field">
+            <label>Default venue</label>
+            <select class="input-field" id="cfg-venue">
+              <option value="polymarket_paper">polymarket (paper)</option>
+              <option value="simmer">simmer (paper)</option>
+              <option value="polymarket">polymarket (live)</option>
+            </select>
+          </div>
+        </div>
+        <button class="section-action" id="save-config-btn" style="margin-top:8px;">💾 Save</button>
+      </div>
+
+      <!-- Quick trade (hidden) -->
+      <div class="quick-trade-section" style="display: none;" aria-hidden="true">
         <div class="panel-label">Quick Trade</div>
         <div class="quick-trade">
           <input class="input-field" id="quick-amount" type="number" placeholder="Amount $" value="10" min="1"
@@ -892,8 +1040,10 @@
       <div>
         <div class="section-head">
           <span class="section-title">Active Markets</span>
+          <span id="market-tag-filter-chip" class="tag-filter-chip" style="display:none;"></span>
           <button class="section-action" id="arb-scan-btn">⚡ Scan Arb</button>
         </div>
+        <p class="section-note">From Polymarket Gamma API. View links may 404 if the event was removed or the slug changed.</p>
         <div class="table-wrap">
           <table>
             <thead>
@@ -902,12 +1052,14 @@
                 <th>YES Probability</th>
                 <th>Divergence</th>
                 <th>Resolves</th>
+                <th>Condition ID</th>
+                <th>Tag</th>
                 <th>Trade</th>
               </tr>
             </thead>
             <tbody id="markets-body">
               <tr>
-                <td colspan="5" class="empty">Loading markets…</td>
+                <td colspan="7" class="empty">Loading markets…</td>
               </tr>
             </tbody>
           </table>
@@ -964,50 +1116,27 @@
                 <tr>
                   <th>Time</th>
                   <th>Market</th>
+                  <th>Title</th>
                   <th>Side</th>
                   <th>Amount</th>
                   <th>Shares</th>
+                  <th>Net PnL</th>
                 </tr>
               </thead>
               <tbody id="log-body">
                 <tr>
-                  <td colspan="5" class="empty">No trades this session</td>
+                  <td colspan="7" class="empty">No trades this session</td>
                 </tr>
               </tbody>
             </table>
           </div>
+          <div id="log-pagination" class="log-pagination" style="display: none;">
+            <span id="log-page-info" class="log-page-info">Page 1</span>
+            <button type="button" id="log-prev" class="log-pagination-btn" aria-label="Previous page">Prev</button>
+            <button type="button" id="log-next" class="log-pagination-btn" aria-label="Next page">Next</button>
+          </div>
         </div>
 
-      </div>
-
-      <!-- Config -->
-      <div>
-        <div class="section-head">
-          <span class="section-title">Bot Configuration</span>
-          <button class="section-action" id="save-config-btn">💾 Save</button>
-        </div>
-        <div class="config-grid">
-          <div class="config-field">
-            <label>Max per trade ($)</label>
-            <input class="input-field" type="number" id="cfg-max-trade" min="1" max="100" />
-          </div>
-          <div class="config-field">
-            <label>Max daily ($)</label>
-            <input class="input-field" type="number" id="cfg-max-daily" min="10" max="500" />
-          </div>
-          <div class="config-field">
-            <label>Min arb edge (%)</label>
-            <input class="input-field" type="number" id="cfg-min-edge" step="0.1" min="0.5" max="10" />
-          </div>
-          <div class="config-field">
-            <label>Default venue</label>
-            <select class="input-field" id="cfg-venue">
-              <option value="simmer">simmer</option>
-              <option value="polymarket">polymarket</option>
-              <option value="kalshi">kalshi</option>
-            </select>
-          </div>
-        </div>
       </div>
 
     </main>
