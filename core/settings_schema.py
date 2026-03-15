@@ -22,21 +22,40 @@ SETTINGS_SCHEMA = [
     },
     {
         "id": "polymarket",
-        "title": "POLYMARKET (Real USDC)",
+        "title": "POLYMARKET (Live & Paper)",
+        "description": "Per [Polymarket API](https://docs.polymarket.com/api-reference/introduction): Gamma (markets), Data (positions), CLOB (trading). L2 trading needs API Key, Secret, Passphrase.",
         "fields": [
-            {
-                "id": "polymarket_funder_addr",
-                "label": "Polymarket Funder Address (Optional)",
-                "type": "text",
-                "placeholder": "EOA Address if using MetaMask/Gnosis",
-                "env": "POLY_FUNDER_ADDRESS"
-            },
             {
                 "id": "wallet_private_key",
                 "label": "Wallet Private Key (EVM)",
                 "type": "password",
                 "placeholder": "0x...",
                 "env": "WALLET_PRIVATE_KEY",
+                "secret": True,
+                "description": "Required for L1 auth and deriving L2 API credentials."
+            },
+            {
+                "id": "polymarket_api_key",
+                "label": "Polymarket CLOB API Key (L2)",
+                "type": "password",
+                "placeholder": "From create/derive API key",
+                "env": "POLYMARKET_API_KEY",
+                "secret": True
+            },
+            {
+                "id": "polymarket_api_secret",
+                "label": "Polymarket CLOB Secret (L2)",
+                "type": "password",
+                "placeholder": "Base64 secret",
+                "env": "POLYMARKET_API_SECRET",
+                "secret": True
+            },
+            {
+                "id": "polymarket_passphrase",
+                "label": "Polymarket CLOB Passphrase (L2)",
+                "type": "password",
+                "placeholder": "Passphrase from API credentials",
+                "env": "POLYMARKET_PASSPHRASE",
                 "secret": True
             },
             {
@@ -44,54 +63,30 @@ SETTINGS_SCHEMA = [
                 "label": "Signature Type",
                 "type": "select",
                 "options": [
-                    {"label": "2 — GNOSIS_SAFE (MetaMask / Browser Wallets)", "value": "2"},
+                    {"label": "2 — GNOSIS_SAFE (MetaMask / Browser)", "value": "2"},
                     {"label": "0 — EOA (Direct wallet, pay gas in POL)", "value": "0"},
-                    {"label": "1 — POLY_PROXY (Magic Link / Email Account)", "value": "1"}
+                    {"label": "1 — POLY_PROXY (Magic Link / Email)", "value": "1"}
                 ],
                 "default": "2",
-                "description": "Choose 2 if using MetaMask. Choose 1 if using an email login key."
+                "env": "POLYMARKET_SIGNATURE_TYPE",
+                "description": "2 = MetaMask/Gnosis Safe. 1 = email login key."
             },
             {
-                "id": "polymarket_api_key",
-                "label": "Polymarket CLOB API Key",
-                "type": "password",
-                "placeholder": "...",
-                "secret": True
-            },
-            {
-                "id": "polymarket_api_secret",
-                "label": "Polymarket CLOB Secret",
-                "type": "password",
-                "placeholder": "...",
-                "secret": True
-            },
-            {
-                "id": "polymarket_passphrase",
-                "label": "Polymarket CLOB Passphrase",
-                "type": "password",
-                "placeholder": "...",
-                "secret": True
+                "id": "polymarket_funder_addr",
+                "label": "Funder Address (Proxy/Safe)",
+                "type": "text",
+                "placeholder": "From polymarket.com/settings",
+                "env": "POLY_FUNDER_ADDRESS",
+                "description": "Wallet shown on Polymarket; required for GNOSIS_SAFE."
             },
             {
                 "id": "polymarket_wallet_addr",
                 "label": "Wallet Address (Public)",
                 "type": "text",
                 "placeholder": "0x...",
-                "secret": False
-            }
-        ]
-    },
-    {
-        "id": "kalshi",
-        "title": "KALSHI (Real USD via USDC on Solana)",
-        "fields": [
-            {
-                "id": "solana_private_key",
-                "label": "Solana Private Key (Base58)",
-                "type": "password",
-                "placeholder": "...",
-                "env": "SOLANA_PRIVATE_KEY",
-                "secret": True
+                "env": "POLYMARKET_WALLET_ADDRESS",
+                "secret": False,
+                "description": "Used for positions/portfolio (Data API)."
             }
         ]
     },

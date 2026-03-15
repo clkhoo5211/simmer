@@ -7,6 +7,7 @@ import os
 from datetime import date
 from loguru import logger
 from core.client import get_client
+from core.history import record_trade
 
 # ── Limits (read from env, fallback to safe defaults) ────────────────────────
 MAX_TRADE = float(os.environ.get("MAX_TRADE_USD", "25"))
@@ -69,9 +70,22 @@ def safe_trade(client, market_id: str, side: str, amount: float, source: str = "
     # 3. Market context safeguards
     try:
         ctx = client.get_market_context(market_id)
-        if ctx.get("warnings"):
-            logger.warning(f"⚠️  Skipping {market_id[:12]} — warnings: {ctx['warnings']}")
+        warnings = ctx.get("warnings", [])
+        
+        # Filter out informational warnings so strategies can proceed
+        fatal_warnings = [
+            w for w in warnings 
+            if "Resolution approaching" not in w 
+            and "Low volume" not in w 
+            and "informational" not in w.lower()
+        ]
+        
+        if fatal_warnings:
+            logger.warning(f"⚠️  Skipping {market_id[:12]} — fatal warnings: {fatal_warnings}")
             return None
+        elif warnings:
+            logger.info(f"ℹ️  Proceeding with {market_id[:12]} despite warnings: {warnings}")
+            
         if ctx.get("discipline", {}).get("is_flip_flop"):
             logger.warning(f"⚠️  Flip-flop guard on {market_id[:12]} — skipping")
             return None
@@ -87,6 +101,14 @@ def safe_trade(client, market_id: str, side: str, amount: float, source: str = "
     )
     if result and result.success:
         record_spend(amount)
+        # Persistent history log
+        record_trade(client.venue if hasattr(client, 'venue') else "simmer", {
+            "market_id": market_id,
+            "side": side,
+            "amount": amount,
+            "shares": getattr(result, "shares_bought", 0),
+            "cost": getattr(result, "cost", amount)
+        })
         logger.success(
             f"✅ [{source}] {side.upper()} ${amount:.2f} on {market_id[:12]} "
             f"→ {result.shares_bought:.3f} shares @ ${result.cost:.2f}"

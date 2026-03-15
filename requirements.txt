@@ -10,4 +10,3 @@ python-dotenv>=1.0.0
 requests>=2.31.0
 pydantic>=2.7.0
 loguru>=0.7.2
-kalshi-python>=2.0.00

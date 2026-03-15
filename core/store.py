@@ -19,7 +19,7 @@ CONFIG_KEY = "simmer:config"
 _TIMEOUT   = 3   # seconds — fast enough for serverless cold start
 
 
-def _redis_request(command: str, *args):
+def redis_request(command: str, *args):
     """Call the Upstash Redis REST API with a command and arguments.
 
     Correct format: POST {base_url} with body ["COMMAND", "arg1", "arg2", ...]
@@ -53,7 +53,7 @@ def load_config(defaults: dict) -> dict:
     If Redis is not configured or the key doesn't exist, returns defaults.
     Stored values are merged on top of defaults so new keys always have a value.
     """
-    raw = _redis_request("get", CONFIG_KEY)
+    raw = redis_request("get", CONFIG_KEY)
     if raw:
         try:
             stored = json.loads(raw)
@@ -70,7 +70,7 @@ def save_config(config: dict) -> bool:
     Persist the current config dict to Redis.
     Returns True on success, False if Redis is unavailable.
     """
-    result = _redis_request("set", CONFIG_KEY, json.dumps(config))
+    result = redis_request("set", CONFIG_KEY, json.dumps(config))
     if result == "OK":
         logger.info("Config saved to Redis.")
         return True
@@ -82,7 +82,7 @@ CREDENTIALS_KEY = "simmer:credentials"
 
 def load_credentials() -> dict:
     """Load saved API credentials from Redis. Returns empty dict if not set."""
-    raw = _redis_request("get", CREDENTIALS_KEY)
+    raw = redis_request("get", CREDENTIALS_KEY)
     if raw:
         try:
             return json.loads(raw)
@@ -93,7 +93,7 @@ def load_credentials() -> dict:
 
 def save_credentials(creds: dict) -> bool:
     """Save API credentials to Redis. Returns True on success."""
-    result = _redis_request("set", CREDENTIALS_KEY, json.dumps(creds))
+    result = redis_request("set", CREDENTIALS_KEY, json.dumps(creds))
     if result == "OK":
         logger.info("Credentials saved to Redis.")
         return True

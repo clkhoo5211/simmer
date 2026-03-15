@@ -6,7 +6,6 @@ Environment variables read by the SDK automatically:
   SIMMER_API_KEY      — required for all venues
   WALLET_PRIVATE_KEY  — EVM private key for Polymarket (0x prefixed 64-char hex)
                         (legacy alias: SIMMER_PRIVATE_KEY — still works but deprecated)
-  SOLANA_PRIVATE_KEY  — base58 secret key for Kalshi via DFlow
 """
 import os
 from simmer_sdk import SimmerClient
@@ -67,9 +66,7 @@ def get_client(venue: str | None = None) -> SimmerClient:
             os.environ["SIMMER_API_KEY"] = creds["simmer_api_key"]
         if creds.get("wallet_private_key"): 
             os.environ["WALLET_PRIVATE_KEY"] = creds["wallet_private_key"]
-        if creds.get("solana_private_key"): 
-            os.environ["SOLANA_PRIVATE_KEY"] = creds["solana_private_key"]
-            
+
         api_key = os.environ.get("SIMMER_API_KEY")
         if not api_key:
             raise RuntimeError(
